@@ -3,6 +3,7 @@ from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+
 class Settings(BaseSettings):
     """Centralized, typed application configuration.
 
@@ -28,6 +29,15 @@ class Settings(BaseSettings):
         # --- Supabase Auth (used starting Phase 7) ---
     SUPABASE_URL: str = "https://htcgjpvlnkknabhygprx.supabase.co"
     SUPABASE_ANON_KEY: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dqcHZsbmtrbmFiaHlncHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NDM5MTMsImV4cCI6MjEwMzQxOTkxM30.RDIXVQ3yezAwd7zTjVXmtsnlFIAcI34MWKpAV7MLsrY"
+
+    CORS_ORIGINS: str = "http://localhost:5173"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Comma-separated string -> list, e.g. for multiple prod domains:
+        CORS_ORIGINS=https://mindtrack.vercel.app,https://mindtrack-staging.vercel.app
+        """
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
 
 @lru_cache

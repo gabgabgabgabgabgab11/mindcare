@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.middleware.rate_limit import limiter
 from app.models.profile import Profile
 from app.schemas.auth import MeResponse
 from app.security.rbac import require_admin
@@ -12,12 +13,16 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 
 @router.get("/me", response_model=MeResponse)
+@limiter.limit("30/minute")
 def read_current_user(
+    request: Request,
     supabase_user: SupabaseUser = Depends(get_current_supabase_user),
     db: Session = Depends(get_db),
 ):
     """Returns the authenticated user's safe profile information.
-    Never returns tokens, passwords, or any other user's data."""
+    Rate-limited to 30 requests/minute per IP — generous enough for
+    normal frontend polling, tight enough to blunt a retry-loop bug
+    or basic abuse."""
     profile = get_or_create_profile(db, supabase_user.id)
     return MeResponse(
         id=str(profile.id),
@@ -30,7 +35,6 @@ def read_current_user(
 
 @router.get("/admin-check")
 def admin_only_probe(profile: Profile = Depends(require_admin)):
-    """Temporary diagnostic route whose only purpose is proving RBAC
-    works end-to-end. Will be replaced by real admin endpoints
-    starting Phase 16 (Admin features / Milestone 3)."""
+    """Temporary diagnostic route — see Phase 8 notes. Not rate-limited
+    since it will be deleted before Milestone 3."""
     return {"message": "You are confirmed as an admin", "role": profile.role}
