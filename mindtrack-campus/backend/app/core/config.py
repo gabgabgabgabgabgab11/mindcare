@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"
 
+        # --- Supabase Auth (used starting Phase 7) ---
+    SUPABASE_URL: str = "https://htcgjpvlnkknabhygprx.supabase.co"
+    SUPABASE_ANON_KEY: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dqcHZsbmtrbmFiaHlncHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NDM5MTMsImV4cCI6MjEwMzQxOTkxM30.RDIXVQ3yezAwd7zTjVXmtsnlFIAcI34MWKpAV7MLsrY"
+
 
 @lru_cache
 def get_settings() -> Settings:
