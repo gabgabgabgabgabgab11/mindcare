@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.models.profile import Profile
 from app.schemas.auth import MeResponse
+from app.security.rbac import require_admin
 from app.security.supabase_auth import SupabaseUser, get_current_supabase_user
 from app.services.profile_service import get_or_create_profile
 
@@ -24,3 +26,11 @@ def read_current_user(
         year_level=profile.year_level,
         program=profile.program,
     )
+
+
+@router.get("/admin-check")
+def admin_only_probe(profile: Profile = Depends(require_admin)):
+    """Temporary diagnostic route whose only purpose is proving RBAC
+    works end-to-end. Will be replaced by real admin endpoints
+    starting Phase 16 (Admin features / Milestone 3)."""
+    return {"message": "You are confirmed as an admin", "role": profile.role}

@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"  # development | staging | production
 
     # --- Database (used starting Phase 4 — defined now so it's ready) ---
-    DATABASE_URL: str = ""
+    DATABASE_URL: str = "postgresql+psycopg2://postgres.htcgjpvlnkknabhygprx:mindtrack-campus@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres"
 
     @property
     def is_production(self) -> bool:
