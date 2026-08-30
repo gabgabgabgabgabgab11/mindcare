@@ -16,6 +16,7 @@ from app.middleware.error_handlers import (
 )
 from app.middleware.rate_limit import limiter
 from app.api.routes.assessments import router as assessments_router
+from app.api.routes.gad7 import router as gad7_router
 
 
 settings = get_settings()
@@ -50,3 +51,4 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(assessments_router)
+app.include_router(gad7_router)

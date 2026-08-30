@@ -12,9 +12,9 @@ from app.schemas.assessment import (
 )
 from app.security.rbac import require_student
 from app.services.assessment_repository import (
-    create_phq9_submission,
-    get_phq9_history_for_user,
-    get_phq9_result_for_user,
+    create_assessment_submission,
+    get_assessment_history_for_user,
+    get_assessment_result_for_user,
 )
 from app.services.phq9_service import (
     PHQ9_ITEMS,
@@ -28,8 +28,6 @@ router = APIRouter(prefix="/api/v1/assessments/phq9", tags=["assessments"])
 
 @router.get("", response_model=Phq9QuestionsResponse)
 def get_phq9_questions():
-    """Public-shape data (no PII) but still requires login at the
-    frontend level, since it's only relevant inside the app."""
     return Phq9QuestionsResponse(scale=RESPONSE_SCALE, items=PHQ9_ITEMS)
 
 
@@ -44,7 +42,7 @@ def submit_phq9(
     except InvalidPhq9ResponsesError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
 
-    result = create_phq9_submission(db, profile.id, payload.responses, scoring)
+    result = create_assessment_submission(db, profile.id, "phq9", payload.responses, scoring)
     return Phq9ResultResponse.model_validate(result)
 
 
@@ -53,7 +51,7 @@ def get_phq9_history(
     profile: Profile = Depends(require_student),
     db: Session = Depends(get_db),
 ):
-    results = get_phq9_history_for_user(db, profile.id)
+    results = get_assessment_history_for_user(db, profile.id, "phq9")
     return [Phq9HistoryItem.model_validate(r) for r in results]
 
 
@@ -63,5 +61,5 @@ def get_phq9_result(
     profile: Profile = Depends(require_student),
     db: Session = Depends(get_db),
 ):
-    result = get_phq9_result_for_user(db, profile.id, result_id)
+    result = get_assessment_result_for_user(db, profile.id, result_id)
     return Phq9ResultResponse.model_validate(result)
