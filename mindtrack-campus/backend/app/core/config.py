@@ -39,6 +39,7 @@ class Settings(BaseSettings):
         """
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
+    JOURNAL_ENCRYPTION_KEY: str = "YnmxnWIQif9bCSwYY1hJiv0B51teRfN9OcR-fXRsvQk="
 
 @lru_cache
 def get_settings() -> Settings:

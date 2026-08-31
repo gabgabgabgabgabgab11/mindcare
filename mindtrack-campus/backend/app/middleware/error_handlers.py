@@ -5,6 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.encoders import jsonable_encoder
 
 logger = logging.getLogger("mindtrack")
 
@@ -71,6 +72,20 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
                 "message": "An unexpected error occurred. Please try again later.",
+            }
+        },
+    )
+
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Pydantic/FastAPI request validation failures (bad request bodies,
+    missing required fields, wrong types, or custom validator failures)."""
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "One or more fields failed validation.",
+                "details": jsonable_encoder(exc.errors()),  # <-- the fix
             }
         },
     )
