@@ -34,3 +34,13 @@ class JournalListItem(BaseModel):
     content: str
     created_at: datetime
     updated_at: datetime
+
+class JournalAnalysisResponse(BaseModel):
+    sentiment_label: str
+    is_uncertain: bool
+    analyzed_at: datetime
+    disclaimer: str = (
+        "This is an automated, non-clinical sentiment trend indicator "
+        "derived from your journal entry. It is not a diagnosis and "
+        "does not reflect professional clinical judgment."
+    )    

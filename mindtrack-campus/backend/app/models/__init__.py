@@ -4,3 +4,4 @@
 from app.models.profile import Profile, auth_users  # noqa: F401
 from app.models.assessment import AssessmentResponse, AssessmentResult  # noqa: F401
 from app.models.journal import Journal  # noqa: F401
+from app.models.journal_analysis import JournalAnalysis  # noqa: F401
