@@ -18,6 +18,7 @@ from app.middleware.rate_limit import limiter
 from app.api.routes.assessments import router as assessments_router
 from app.api.routes.gad7 import router as gad7_router
 from app.api.routes.journals import router as journals_router
+from app.api.routes.wellness import router as wellness_router
 
 
 
@@ -55,3 +56,4 @@ app.include_router(auth_router)
 app.include_router(assessments_router)
 app.include_router(gad7_router)
 app.include_router(journals_router)
+app.include_router(wellness_router)
