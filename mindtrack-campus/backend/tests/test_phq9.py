@@ -118,6 +118,52 @@ def test_submit_as_admin_returns_403():
         app.dependency_overrides.clear()
 
 
+def test_submit_response_never_contains_total_score():
+    student_id = str(uuid.uuid4())
+
+    def override_user():
+        return SupabaseUser(id=student_id, email="student@example.com")
+
+    class _Session:
+        def get(self, model, pk):
+            return Profile(id=uuid.UUID(student_id), role="student")
+
+        def add(self, obj):
+            pass
+
+        def flush(self):
+            pass
+
+        def commit(self):
+            pass
+
+        def refresh(self, obj):
+            import uuid as _uuid
+            from datetime import datetime, timezone
+
+            if getattr(obj, "id", None) is None:
+                obj.id = _uuid.uuid4()
+            if getattr(obj, "created_at", None) is None:
+                obj.created_at = datetime.now(timezone.utc)
+
+    def override_db():
+        yield _Session()
+
+    app.dependency_overrides[get_current_supabase_user] = override_user
+    app.dependency_overrides[get_db] = override_db
+    try:
+        response = client.post(
+            "/api/v1/assessments/phq9",
+            json={"responses": [1, 1, 0, 2, 0, 0, 0, 0, 0]},
+        )
+        body = response.json()
+        assert "total_score" not in body
+        assert "qualitative_feedback" in body
+        assert len(body["qualitative_feedback"]) > 0
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_submit_with_wrong_response_count_returns_422():
     student_id = str(uuid.uuid4())
 

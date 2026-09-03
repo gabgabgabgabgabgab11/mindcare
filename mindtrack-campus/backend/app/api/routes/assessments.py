@@ -22,8 +22,29 @@ from app.services.phq9_service import (
     InvalidPhq9ResponsesError,
     score_phq9,
 )
+from app.services.qualitative_feedback import get_phq9_feedback
 
 router = APIRouter(prefix="/api/v1/assessments/phq9", tags=["assessments"])
+
+
+def _to_result_response(result) -> Phq9ResultResponse:
+    return Phq9ResultResponse(
+        id=result.id,
+        severity_band=result.severity_band,
+        qualitative_feedback=get_phq9_feedback(result.severity_band),
+        escalated=result.escalated,
+        created_at=result.created_at,
+    )
+
+
+def _to_history_item(result) -> Phq9HistoryItem:
+    return Phq9HistoryItem(
+        id=result.id,
+        severity_band=result.severity_band,
+        qualitative_feedback=get_phq9_feedback(result.severity_band),
+        escalated=result.escalated,
+        created_at=result.created_at,
+    )
 
 
 @router.get("", response_model=Phq9QuestionsResponse)
@@ -43,7 +64,7 @@ def submit_phq9(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
 
     result = create_assessment_submission(db, profile.id, "phq9", payload.responses, scoring)
-    return Phq9ResultResponse.model_validate(result)
+    return _to_result_response(result)
 
 
 @router.get("/history", response_model=list[Phq9HistoryItem])
@@ -52,7 +73,7 @@ def get_phq9_history(
     db: Session = Depends(get_db),
 ):
     results = get_assessment_history_for_user(db, profile.id, "phq9")
-    return [Phq9HistoryItem.model_validate(r) for r in results]
+    return [_to_history_item(r) for r in results]
 
 
 @router.get("/{result_id}", response_model=Phq9ResultResponse)
@@ -62,4 +83,4 @@ def get_phq9_result(
     db: Session = Depends(get_db),
 ):
     result = get_assessment_result_for_user(db, profile.id, result_id)
-    return Phq9ResultResponse.model_validate(result)
+    return _to_result_response(result)

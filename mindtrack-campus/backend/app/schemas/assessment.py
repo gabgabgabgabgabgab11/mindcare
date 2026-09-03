@@ -18,8 +18,8 @@ class Phq9SubmitRequest(BaseModel):
 
 class Phq9ResultResponse(BaseModel):
     id: UUID
-    total_score: int
     severity_band: str
+    qualitative_feedback: str
     escalated: bool
     created_at: datetime
     disclaimer: str = (
@@ -28,19 +28,12 @@ class Phq9ResultResponse(BaseModel):
         "support, please see the Resources section or contact OSS."
     )
 
-    class Config:
-        from_attributes = True
-
-
 class Phq9HistoryItem(BaseModel):
     id: UUID
-    total_score: int
     severity_band: str
+    qualitative_feedback: str
     escalated: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class Gad7QuestionsResponse(BaseModel):
     assessment_code: str = "gad7"
@@ -55,8 +48,8 @@ class Gad7SubmitRequest(BaseModel):
 
 class Gad7ResultResponse(BaseModel):
     id: UUID
-    total_score: int
     severity_band: str
+    qualitative_feedback: str
     escalated: bool
     created_at: datetime
     disclaimer: str = (
@@ -65,16 +58,10 @@ class Gad7ResultResponse(BaseModel):
         "support, please see the Resources section or contact OSS."
     )
 
-    class Config:
-        from_attributes = True
-
-
 class Gad7HistoryItem(BaseModel):
     id: UUID
-    total_score: int
     severity_band: str
+    qualitative_feedback: str
     escalated: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True        
