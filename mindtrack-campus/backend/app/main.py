@@ -20,6 +20,9 @@ from app.api.routes.gad7 import router as gad7_router
 from app.api.routes.journals import router as journals_router
 from app.api.routes.wellness import router as wellness_router
 
+from app.api.routes.privacy import router as privacy_router
+from app.api.routes.consent import router as consent_router
+
 
 
 settings = get_settings()
@@ -57,3 +60,5 @@ app.include_router(assessments_router)
 app.include_router(gad7_router)
 app.include_router(journals_router)
 app.include_router(wellness_router)
+app.include_router(privacy_router)
+app.include_router(consent_router)

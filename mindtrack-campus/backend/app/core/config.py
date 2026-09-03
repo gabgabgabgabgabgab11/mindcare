@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     SUPABASE_ANON_KEY: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dqcHZsbmtrbmFiaHlncHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NDM5MTMsImV4cCI6MjEwMzQxOTkxM30.RDIXVQ3yezAwd7zTjVXmtsnlFIAcI34MWKpAV7MLsrY"
 
     CORS_ORIGINS: str = "http://localhost:5173"
+    
 
     @property
     def cors_origins_list(self) -> list[str]:
@@ -40,6 +41,7 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
     JOURNAL_ENCRYPTION_KEY: str = "YnmxnWIQif9bCSwYY1hJiv0B51teRfN9OcR-fXRsvQk="
+    CURRENT_CONSENT_VERSION: str = "1.0"
 
 @lru_cache
 def get_settings() -> Settings:
