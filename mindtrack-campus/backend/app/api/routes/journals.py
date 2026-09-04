@@ -15,7 +15,7 @@ from app.schemas.journal import (
     JournalResponse,
     JournalUpdateRequest,
 )
-from app.security.rbac import require_student
+from app.security.consent_gate import require_consent
 from app.services.journal_repository import (
     create_journal,
     delete_journal_for_user,
@@ -53,7 +53,7 @@ def _run_analysis_best_effort(db: Session, journal_id, content: str) -> None:
 @router.post("", response_model=JournalResponse, status_code=status.HTTP_201_CREATED)
 def create_journal_entry(
     payload: JournalCreateRequest,
-    profile: Profile = Depends(require_student),
+    profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
     journal = create_journal(db, profile.id, payload.content)
@@ -63,7 +63,7 @@ def create_journal_entry(
 
 @router.get("", response_model=list[JournalListItem])
 def list_journal_entries(
-    profile: Profile = Depends(require_student),
+    profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
     journals = list_journals_for_user(db, profile.id)
@@ -73,7 +73,7 @@ def list_journal_entries(
 @router.get("/{journal_id}", response_model=JournalResponse)
 def get_journal_entry(
     journal_id: UUID,
-    profile: Profile = Depends(require_student),
+    profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
     journal = get_journal_for_user(db, profile.id, journal_id)
@@ -83,7 +83,7 @@ def get_journal_entry(
 @router.get("/{journal_id}/analysis", response_model=JournalAnalysisResponse)
 def get_journal_analysis(
     journal_id: UUID,
-    profile: Profile = Depends(require_student),
+    profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
     # Ownership check reuses the same 404-on-mismatch journal lookup —
@@ -107,7 +107,7 @@ def get_journal_analysis(
 def update_journal_entry(
     journal_id: UUID,
     payload: JournalUpdateRequest,
-    profile: Profile = Depends(require_student),
+    profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
     journal = update_journal_for_user(db, profile.id, journal_id, payload.content)
@@ -118,7 +118,7 @@ def update_journal_entry(
 @router.delete("/{journal_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_journal_entry(
     journal_id: UUID,
-    profile: Profile = Depends(require_student),
+    profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
     delete_journal_for_user(db, profile.id, journal_id)

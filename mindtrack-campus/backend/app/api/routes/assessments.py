@@ -10,7 +10,8 @@ from app.schemas.assessment import (
     Phq9ResultResponse,
     Phq9SubmitRequest,
 )
-from app.security.rbac import require_student
+from app.security.consent_gate import require_consent
+
 from app.services.assessment_repository import (
     create_assessment_submission,
     get_assessment_history_for_user,
@@ -55,7 +56,7 @@ def get_phq9_questions():
 @router.post("", response_model=Phq9ResultResponse, status_code=status.HTTP_201_CREATED)
 def submit_phq9(
     payload: Phq9SubmitRequest,
-    profile: Profile = Depends(require_student),
+    profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
     try:
@@ -69,7 +70,7 @@ def submit_phq9(
 
 @router.get("/history", response_model=list[Phq9HistoryItem])
 def get_phq9_history(
-    profile: Profile = Depends(require_student),
+    profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
     results = get_assessment_history_for_user(db, profile.id, "phq9")
@@ -79,7 +80,7 @@ def get_phq9_history(
 @router.get("/{result_id}", response_model=Phq9ResultResponse)
 def get_phq9_result(
     result_id: UUID,
-    profile: Profile = Depends(require_student),
+    profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
     result = get_assessment_result_for_user(db, profile.id, result_id)

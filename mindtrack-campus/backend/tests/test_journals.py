@@ -8,7 +8,7 @@ from app.main import app
 from app.models.journal import Journal
 from app.models.profile import Profile
 from app.security.encryption import decrypt_text, encrypt_text
-from app.security.rbac import require_student
+from app.security.consent_gate import require_consent   
 from app.security.supabase_auth import SupabaseUser, get_current_supabase_user
 
 
@@ -157,7 +157,7 @@ def test_create_journal_with_empty_content_returns_422():
     ] = _student_user(student_id)
 
     app.dependency_overrides[
-        require_student
+        require_consent
     ] = _student_profile(student_id)
 
     app.dependency_overrides[
@@ -189,7 +189,7 @@ def test_create_journal_oversized_content_returns_422():
     ] = _student_user(student_id)
 
     app.dependency_overrides[
-        require_student
+        require_consent
     ] = _student_profile(student_id)
 
     app.dependency_overrides[
@@ -225,7 +225,7 @@ def test_create_and_retrieve_journal_round_trip():
     ] = _student_user(student_id)
 
     app.dependency_overrides[
-        require_student
+        require_consent
     ] = _student_profile(student_id)
 
     app.dependency_overrides[
@@ -305,7 +305,7 @@ def test_cross_user_journal_access_returns_404():
     ] = _student_user(str(requester_id))
 
     app.dependency_overrides[
-        require_student
+        require_consent
     ] = _student_profile(str(requester_id))
 
     app.dependency_overrides[
@@ -338,7 +338,7 @@ def test_delete_journal_removes_it():
     ] = _student_user(student_id)
 
     app.dependency_overrides[
-        require_student
+        require_consent
     ] = _student_profile(student_id)
 
     app.dependency_overrides[
@@ -391,7 +391,7 @@ def test_update_journal_changes_content():
     ] = _student_user(student_id)
 
     app.dependency_overrides[
-        require_student
+        require_consent
     ] = _student_profile(student_id)
 
     app.dependency_overrides[
@@ -441,3 +441,38 @@ def test_update_journal_changes_content():
 
     finally:
         app.dependency_overrides.clear()
+
+
+def test_create_journal_without_consent_returns_403():
+    from app.db.session import get_db
+    from app.security.rbac import require_student
+    from app.security.supabase_auth import get_current_supabase_user
+
+    student_id = str(uuid.uuid4())
+
+    class _NoConsentSession:
+        def get(self, model, pk):
+            if model.__name__ == "Profile":
+                return Profile(id=uuid.UUID(student_id), role="student")
+            return None
+
+        def execute(self, stmt):
+            class _Result:
+                def scalars(self):
+                    return self
+                def first(self):
+                    return None  # no active consent record exists
+            return _Result()
+
+    def override_user():
+        return SupabaseUser(id=student_id, email="student@example.com")
+
+    app.dependency_overrides[get_current_supabase_user] = override_user
+    app.dependency_overrides[get_db] = lambda: _NoConsentSession()
+    # Deliberately NOT overriding require_student or require_consent —
+    # this test needs the REAL chain to run, so the gate itself is proven.
+    try:
+        response = client.post("/api/v1/journals", json={"content": "test entry"})
+        assert response.status_code == 403
+    finally:
+        app.dependency_overrides.clear()        
