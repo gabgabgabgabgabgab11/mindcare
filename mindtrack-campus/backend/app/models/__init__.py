@@ -9,3 +9,6 @@ from app.models.privacy import PrivacySettings  # noqa: F401
 from app.models.consent import ConsentRecord  # noqa: F401
 from app.models.wellness_checkin import WellnessCheckIn 
 from app.models.resource import Resource
+from app.models.mantra_wall import MantraWallPost, MantraWallReport  # noqa: F401
+from app.models.notification import Notification
+from app.models.audit_log import AuditLog  # noqa: F401

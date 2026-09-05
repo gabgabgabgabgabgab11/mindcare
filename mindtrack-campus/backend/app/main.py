@@ -24,6 +24,10 @@ from app.api.routes.privacy import router as privacy_router
 from app.api.routes.consent import router as consent_router
 from app.api.routes.wellness_checkins import router as wellness_checkins_router
 from app.api.routes.resources import router as resources_router, admin_router as admin_resources_router
+from app.api.routes.mantra_wall import router as mantra_wall_router, admin_router as admin_mantra_wall_router
+from app.api.routes.notifications import router as notifications_router
+from app.api.routes.audit_logs import router as audit_logs_router
+
 
 
 
@@ -68,3 +72,7 @@ app.include_router(consent_router)
 app.include_router(wellness_checkins_router)
 app.include_router(resources_router)
 app.include_router(admin_resources_router)
+app.include_router(mantra_wall_router)
+app.include_router(admin_mantra_wall_router)
+app.include_router(notifications_router)
+app.include_router(audit_logs_router)
