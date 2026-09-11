@@ -16,6 +16,7 @@ from app.services.resource_repository import (
     list_active_resources,
     update_resource,
 )
+from app.services.audit_log_repository import log_event
 
 router = APIRouter(prefix="/api/v1/resources", tags=["resources"])
 admin_router = APIRouter(prefix="/api/v1/admin/resources", tags=["admin-resources"])
@@ -70,3 +71,21 @@ def admin_delete_resource(
     db: Session = Depends(get_db),
 ):
     delete_resource(db, resource_id)
+
+
+@admin_router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
+def admin_create_resource(payload: ResourceCreateRequest, profile: Profile = Depends(require_admin), db: Session = Depends(get_db)):
+    resource = create_resource(db, payload)
+    log_event(db, "admin_action", f"Resource created: {resource.title}", actor_id=profile.id)
+    return resource
+
+@admin_router.put("/{resource_id}", response_model=ResourceResponse)
+def admin_update_resource(resource_id: UUID, payload: ResourceUpdateRequest, profile: Profile = Depends(require_admin), db: Session = Depends(get_db)):
+    resource = update_resource(db, resource_id, payload)
+    log_event(db, "admin_action", f"Resource updated: {resource_id}", actor_id=profile.id)
+    return resource
+
+@admin_router.delete("/{resource_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_resource(resource_id: UUID, profile: Profile = Depends(require_admin), db: Session = Depends(get_db)):
+    delete_resource(db, resource_id)
+    log_event(db, "admin_action", f"Resource deleted: {resource_id}", actor_id=profile.id)    

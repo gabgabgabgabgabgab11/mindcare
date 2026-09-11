@@ -22,6 +22,7 @@ from app.services.mantra_wall_repository import (
     list_visible_posts,
     moderate_post,
 )
+from app.services.audit_log_repository import log_event
 
 router = APIRouter(prefix="/api/v1/mantra-wall", tags=["mantra-wall"])
 admin_router = APIRouter(prefix="/api/v1/admin/mantra-wall", tags=["admin-mantra-wall"])
@@ -82,6 +83,18 @@ def admin_moderate_post(
     db: Session = Depends(get_db),
 ):
     post = moderate_post(db, post_id, profile.id, payload.moderation_status)
+    return MantraWallPostResponse(
+        id=post.id, post_type=post.post_type, content=post.content, nickname=post.nickname,
+        moderation_status=post.moderation_status, created_at=post.created_at,
+    )
+
+@admin_router.patch("/posts/{post_id}/moderate", response_model=MantraWallPostResponse)
+def admin_moderate_post(post_id: UUID, payload: MantraWallModerateRequest, profile: Profile = Depends(require_admin), db: Session = Depends(get_db)):
+    post = moderate_post(db, post_id, profile.id, payload.moderation_status)
+    log_event(
+        db, "mantra_wall_moderation", f"Post moderated to '{payload.moderation_status}'",
+        actor_id=profile.id, metadata={"post_id": str(post_id)},
+    )
     return MantraWallPostResponse(
         id=post.id, post_type=post.post_type, content=post.content, nickname=post.nickname,
         moderation_status=post.moderation_status, created_at=post.created_at,

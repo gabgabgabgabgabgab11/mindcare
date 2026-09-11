@@ -24,6 +24,7 @@ from app.services.journal_repository import (
     to_response_dict,
     update_journal_for_user,
 )
+from app.services.audit_log_repository import log_event
 
 logger = logging.getLogger("mindtrack")
 
@@ -122,3 +123,24 @@ def delete_journal_entry(
     db: Session = Depends(get_db),
 ):
     delete_journal_for_user(db, profile.id, journal_id)
+
+@router.post("", response_model=JournalResponse, status_code=status.HTTP_201_CREATED)
+def create_journal_entry(
+    payload: JournalCreateRequest,
+    profile: Profile = Depends(require_consent),
+    db: Session = Depends(get_db),
+):
+    journal = create_journal(db, profile.id, payload.content)
+    _run_analysis_best_effort(db, journal.id, payload.content)
+    log_event(db, "journal_created", "Journal entry created", actor_id=profile.id)
+    return JournalResponse(**to_response_dict(journal))
+
+
+@router.delete("/{journal_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_journal_entry(
+    journal_id: UUID,
+    profile: Profile = Depends(require_consent),
+    db: Session = Depends(get_db),
+):
+    delete_journal_for_user(db, profile.id, journal_id)
+    log_event(db, "journal_deleted", "Journal entry deleted", actor_id=profile.id)    

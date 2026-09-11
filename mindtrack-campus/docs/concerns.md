@@ -1,0 +1,4 @@
+new post is invisible to other students until an admin approves it. That's the safer default given Dr. Torres's concern, but it means no instant gratification on posting — worth a beat before it ships. Two ways to close this out:
+
+If you've already run it by your adviser (or you're comfortable owning the call yourself as team lead), just tell me "confirmed pre-moderation" and I'll update the Basis doc's flag to resolved.
+If you want to flip it to post-moderation (visible immediately, admin can retroactively hide/reject), say so and I'll give you the small diff for that instead — it's a one-line change in list_visible_posts' filter, not a rebuild.

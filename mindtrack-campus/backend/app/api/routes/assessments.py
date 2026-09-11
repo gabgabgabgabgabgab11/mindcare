@@ -24,6 +24,8 @@ from app.services.phq9_service import (
     score_phq9,
 )
 from app.services.qualitative_feedback import get_phq9_feedback
+from app.services.audit_log_repository import log_event
+
 
 router = APIRouter(prefix="/api/v1/assessments/phq9", tags=["assessments"])
 
@@ -84,4 +86,22 @@ def get_phq9_result(
     db: Session = Depends(get_db),
 ):
     result = get_assessment_result_for_user(db, profile.id, result_id)
+    return _to_result_response(result)
+
+@router.post("", response_model=Phq9ResultResponse, status_code=status.HTTP_201_CREATED)
+def submit_phq9(
+    payload: Phq9SubmitRequest,
+    profile: Profile = Depends(require_consent),
+    db: Session = Depends(get_db),
+):
+    try:
+        scoring = score_phq9(payload.responses)
+    except InvalidPhq9ResponsesError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+
+    result = create_assessment_submission(db, profile.id, "phq9", payload.responses, scoring)
+    log_event(
+        db, "assessment_submission", "PHQ-9 submitted",
+        actor_id=profile.id, metadata={"severity_band": result.severity_band, "escalated": result.escalated},
+    )
     return _to_result_response(result)
