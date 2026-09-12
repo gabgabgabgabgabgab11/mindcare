@@ -4,6 +4,29 @@ This file tracks major technology and architecture decisions made during backend
 
 ---
 
+## ADR-007 — One Moderated Mantra Wall, No Open Freedom Wall
+
+### Context
+
+The original open Freedom Wall conflicts with the project's safe, moderated
+small-wins/affirmations space. Keeping both pages would create duplicate
+student destinations with incompatible moderation and safety expectations.
+
+### Decision
+
+`FreedomWall.tsx` is retired. `SmallWins.tsx` is the single student page and
+will use the backend Mantra Wall contract. Its content is restricted to
+affirmations, gratitude, and small wins; it is not a crisis-support forum.
+
+### Consequences
+
+- There is one route, one set of post types, and one moderation workflow.
+- Existing or restored frontend navigation must not link to a Freedom Wall.
+- The backend continues to protect student-facing anonymity by withholding
+  `user_id` from `MantraWallPostResponse`.
+
+---
+
 ## ADR-001 — Supabase Auth over a Custom `users` Table
 
 ### Context
