@@ -187,21 +187,94 @@ def test_create_post_rejects_oversized_content():
 
 
 # ============================================================
-# CREATE -> DEFAULTS TO PENDING, NEVER EXPOSES user_id
+# TIERED AUTO-MODERATION (ADR-011)
 # ============================================================
 
-def test_create_post_defaults_to_pending_and_hides_user_id():
+def test_positive_post_auto_approved():
+    """Clearly positive content should be auto-approved by VADER."""
     fake_session = _FakeMantraWallSession()
     app.dependency_overrides[require_consent] = _student()
     app.dependency_overrides[get_db] = _override_db(fake_session)
     try:
         response = client.post(
             "/api/v1/mantra-wall/posts",
-            json={"post_type": "win", "content": "Finished my thesis draft today!", "nickname": "quietowl"},
+            json={"post_type": "gratitude", "content": "I am so grateful for my amazing friends and family today!"},
         )
         assert response.status_code == 201
         body = response.json()
-        assert body["moderation_status"] == "pending"
+        assert body["moderation_status"] == "approved"
+        assert "auto-approved" in (body.get("filter_reason") or "")
+        assert "user_id" not in body
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_negative_post_auto_rejected():
+    """Clearly negative content should be auto-rejected by VADER."""
+    fake_session = _FakeMantraWallSession()
+    app.dependency_overrides[require_consent] = _student()
+    app.dependency_overrides[get_db] = _override_db(fake_session)
+    try:
+        response = client.post(
+            "/api/v1/mantra-wall/posts",
+            json={"post_type": "affirmation", "content": "I hate everything and everyone, this is terrible and miserable"},
+        )
+        assert response.status_code == 201
+        body = response.json()
+        assert body["moderation_status"] == "rejected"
+        assert "auto-rejected" in (body.get("filter_reason") or "")
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_ambiguous_post_goes_to_review():
+    """Neutral/ambiguous content should go to 'review' status."""
+    fake_session = _FakeMantraWallSession()
+    app.dependency_overrides[require_consent] = _student()
+    app.dependency_overrides[get_db] = _override_db(fake_session)
+    try:
+        response = client.post(
+            "/api/v1/mantra-wall/posts",
+            json={"post_type": "win", "content": "Just a regular day at school today."},
+        )
+        assert response.status_code == 201
+        body = response.json()
+        assert body["moderation_status"] == "review"
+        assert "auto-review" in (body.get("filter_reason") or "")
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_blocklist_hit_auto_rejected():
+    """Posts with blocklist keywords should be auto-rejected."""
+    fake_session = _FakeMantraWallSession()
+    app.dependency_overrides[require_consent] = _student()
+    app.dependency_overrides[get_db] = _override_db(fake_session)
+    try:
+        response = client.post(
+            "/api/v1/mantra-wall/posts",
+            json={"post_type": "affirmation", "content": "This is some damn profanity content"},
+        )
+        assert response.status_code == 201
+        body = response.json()
+        assert body["moderation_status"] == "rejected"
+        assert "content policy violation" in (body.get("filter_reason") or "")
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_create_post_hides_user_id_and_includes_notices():
+    """Verify user_id is never exposed and notices are present."""
+    fake_session = _FakeMantraWallSession()
+    app.dependency_overrides[require_consent] = _student()
+    app.dependency_overrides[get_db] = _override_db(fake_session)
+    try:
+        response = client.post(
+            "/api/v1/mantra-wall/posts",
+            json={"post_type": "win", "content": "Finished my thesis draft today! So happy and proud!", "nickname": "quietowl"},
+        )
+        assert response.status_code == 201
+        body = response.json()
         assert body["nickname"] == "quietowl"
         assert "user_id" not in body
         assert "seek_assistance_notice" in body
@@ -241,6 +314,24 @@ def test_report_existing_post_succeeds():
         app.dependency_overrides.clear()
 
 
+def test_report_does_not_change_post_status():
+    """Reporting a post should NOT change its moderation status (ADR-011).
+    The post should remain 'approved' and visible until admin reviews."""
+    post = MantraWallPost(
+        id=uuid.uuid4(), user_id=uuid.uuid4(), post_type="gratitude",
+        content="Thankful for today", moderation_status="approved", created_at=datetime.now(timezone.utc),
+    )
+    fake_session = _FakeMantraWallSession(posts=[post])
+    app.dependency_overrides[require_authenticated_user] = _student()
+    app.dependency_overrides[get_db] = _override_db(fake_session)
+    try:
+        client.post(f"/api/v1/mantra-wall/posts/{post.id}/report", json={"reason": "Seems off"})
+        # Verify post status is still approved
+        assert post.moderation_status == "approved"
+    finally:
+        app.dependency_overrides.clear()
+
+
 # ============================================================
 # ADMIN
 # ============================================================
@@ -267,7 +358,7 @@ def test_admin_routes_reject_student():
 def test_admin_can_list_reports_with_post_content():
     post = MantraWallPost(
         id=uuid.uuid4(), user_id=uuid.uuid4(), post_type="win",
-        content="I passed my board exam!", moderation_status="pending", created_at=datetime.now(timezone.utc),
+        content="I passed my board exam!", moderation_status="approved", created_at=datetime.now(timezone.utc),
     )
     report = MantraWallReport(
         id=uuid.uuid4(), post_id=post.id, reporter_id=uuid.uuid4(),
@@ -290,7 +381,7 @@ def test_admin_can_list_reports_with_post_content():
 def test_admin_can_moderate_post_to_approved():
     post = MantraWallPost(
         id=uuid.uuid4(), user_id=uuid.uuid4(), post_type="affirmation",
-        content="You are doing great.", moderation_status="pending", created_at=datetime.now(timezone.utc),
+        content="You are doing great.", moderation_status="review", created_at=datetime.now(timezone.utc),
     )
     fake_session = _FakeMantraWallSession(posts=[post])
     app.dependency_overrides[require_admin] = _admin()
@@ -306,10 +397,30 @@ def test_admin_can_moderate_post_to_approved():
         app.dependency_overrides.clear()
 
 
+def test_admin_can_archive_post():
+    """Admin can set a post to 'archived' status (ADR-011)."""
+    post = MantraWallPost(
+        id=uuid.uuid4(), user_id=uuid.uuid4(), post_type="win",
+        content="Debatable post content", moderation_status="approved", created_at=datetime.now(timezone.utc),
+    )
+    fake_session = _FakeMantraWallSession(posts=[post])
+    app.dependency_overrides[require_admin] = _admin()
+    app.dependency_overrides[get_db] = _override_db(fake_session)
+    try:
+        response = client.patch(
+            f"/api/v1/admin/mantra-wall/posts/{post.id}/moderate",
+            json={"moderation_status": "archived"},
+        )
+        assert response.status_code == 200
+        assert response.json()["moderation_status"] == "archived"
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_admin_moderate_rejects_invalid_status():
     post = MantraWallPost(
         id=uuid.uuid4(), user_id=uuid.uuid4(), post_type="affirmation",
-        content="You are doing great.", moderation_status="pending", created_at=datetime.now(timezone.utc),
+        content="You are doing great.", moderation_status="review", created_at=datetime.now(timezone.utc),
     )
     fake_session = _FakeMantraWallSession(posts=[post])
     app.dependency_overrides[require_admin] = _admin()
@@ -320,5 +431,31 @@ def test_admin_moderate_rejects_invalid_status():
             json={"moderation_status": "hidden"},
         )
         assert response.status_code == 422
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_bulk_moderate_endpoint_exists():
+    """Bulk moderate endpoint accepts valid request."""
+    post1 = MantraWallPost(
+        id=uuid.uuid4(), user_id=uuid.uuid4(), post_type="affirmation",
+        content="Post one positive happy.", moderation_status="review", created_at=datetime.now(timezone.utc),
+    )
+    post2 = MantraWallPost(
+        id=uuid.uuid4(), user_id=uuid.uuid4(), post_type="gratitude",
+        content="Post two thankful grateful.", moderation_status="review", created_at=datetime.now(timezone.utc),
+    )
+    fake_session = _FakeMantraWallSession(posts=[post1, post2])
+    app.dependency_overrides[require_admin] = _admin()
+    app.dependency_overrides[get_db] = _override_db(fake_session)
+    try:
+        response = client.post(
+            "/api/v1/admin/mantra-wall/bulk-moderate",
+            json={"post_ids": [str(post1.id), str(post2.id)], "moderation_status": "approved"},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body) == 2
+        assert all(p["moderation_status"] == "approved" for p in body)
     finally:
         app.dependency_overrides.clear()

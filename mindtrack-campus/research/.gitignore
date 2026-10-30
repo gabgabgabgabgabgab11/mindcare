@@ -1,0 +1,9 @@
+﻿# Research environment — never committed
+venv-research/
+__pycache__/
+*.pyc
+
+# HuggingFace model cache (cached at ~/.cache/huggingface globally, not here)
+# Output CSVs — commit only if you want results in source control
+# comparison_results.csv
+# summary_metrics.csv

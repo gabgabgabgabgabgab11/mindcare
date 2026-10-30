@@ -30,6 +30,9 @@ def read_current_user(
         role=profile.role,
         year_level=profile.year_level,
         program=profile.program,
+        section=profile.section,
+        companion_pet=profile.companion_pet,
+        companion_nickname=profile.companion_nickname,
     )
 
 

@@ -14,6 +14,7 @@ from app.services.resource_repository import (
     get_active_resource,
     get_resource_for_admin,
     list_active_resources,
+    list_resources_for_admin,
     update_resource,
 )
 from app.services.audit_log_repository import log_event
@@ -45,33 +46,12 @@ def get_resource(
 
 # --- Admin (CRUD) ---
 
-@admin_router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
-def admin_create_resource(
-    payload: ResourceCreateRequest,
+@admin_router.get("", response_model=list[ResourceResponse])
+def admin_list_resources(
     profile: Profile = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    return create_resource(db, payload)
-
-
-@admin_router.put("/{resource_id}", response_model=ResourceResponse)
-def admin_update_resource(
-    resource_id: UUID,
-    payload: ResourceUpdateRequest,
-    profile: Profile = Depends(require_admin),
-    db: Session = Depends(get_db),
-):
-    return update_resource(db, resource_id, payload)
-
-
-@admin_router.delete("/{resource_id}", status_code=status.HTTP_204_NO_CONTENT)
-def admin_delete_resource(
-    resource_id: UUID,
-    profile: Profile = Depends(require_admin),
-    db: Session = Depends(get_db),
-):
-    delete_resource(db, resource_id)
-
+    return list_resources_for_admin(db)
 
 @admin_router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
 def admin_create_resource(payload: ResourceCreateRequest, profile: Profile = Depends(require_admin), db: Session = Depends(get_db)):

@@ -217,7 +217,7 @@ Option 1 was rejected because it would mean knowingly proceeding against a direc
 ## ADR-008 — Mantra Wall Pre-Moderation Visibility
 
 ### Status
-**PROPOSED — pending confirmation from adviser/psychologist validator.** Implemented in code as of Phase 18, but not yet signed off as the final decision.
+**SUPERSEDED by ADR-011 — Tiered Auto-Moderation.** Pre-moderation was the initial safe default but was replaced with NLP-assisted tiered auto-moderation to reduce admin workload (a finding from stakeholder interviews) while preserving safety for ambiguous and harmful content.
 
 ### Context
 
@@ -241,3 +241,113 @@ Given this is the exact feature Dr. Torres flagged as highest-risk (self-harm co
 - **Advantage:** No harmful or identifying content is ever visible to other students, even briefly, before a human reviews it.
 - **Disadvantage:** Slower feedback loop for students posting — may reduce engagement with the feature compared to instant publishing.
 - **Required follow-up:** Confirm this choice with the adviser and/or Dr. Torres before UAT. If reversed to post-moderation, the required code change is small (the `list_visible_posts` filter), not a rebuild.
+
+---
+
+## ADR-009 — Phase 23C Uses Existing Student API Contracts
+
+### Context
+
+The student frontend needed to complete three previously deferred surfaces:
+consent status, resources, and notifications. MindCare does not include a
+research booking, counselor booking, or appointment-booking feature. The
+backend exposes authenticated endpoints for resource listing and notification
+listing/read state only.
+
+### Decision
+
+Connect the frontend directly to the existing consent-status, resource-listing,
+and notification-list/read contracts. Do not add or simulate booking flows,
+create client-side notifications, or claim that an external resource action was
+completed.
+
+### Consequences
+
+- Students can see whether the current consent version is active, browse/search
+  active resources, and mark their own notifications as read.
+- Resource cards only show an external-link action when the backend supplies a
+  URL; booking is not part of MindCare's scope.
+- Notification content remains backend-generated, preserving per-user access
+  control and avoiding frontend-only records.
+
+---
+
+## ADR-010 — Admin Screens Use Existing Operational Contracts
+
+### Context
+
+Phase 23E required admin Dashboard, Moderation, Resource Management, and Audit
+Logs screens. The backend provides moderation reports/actions, resource CRUD,
+and read-only audit logs, but does not provide student analytics totals,
+campus mood trends, or user-management endpoints.
+
+### Decision
+
+Admin screens use only the supported contracts. Dashboard shows live counts and
+recent records from those endpoints; Moderation and Resource Management call
+their real admin APIs; Audit Logs remains read-only. Unsupported analytics and
+user-management actions remain absent rather than being represented by mock
+values.
+
+### Consequences
+
+- Admin views no longer claim fake student totals, mood averages, alerts, or
+  chart data.
+- Inactive resources remain visible to admins so they can be reactivated.
+- Audit log records are never created or edited from the frontend.
+
+---
+
+## ADR-011 — Tiered Auto-Moderation Replacing Pre-Moderation Queue
+
+### Status
+**ACCEPTED.** Supersedes ADR-008. Implemented in code.
+
+### Context
+
+ADR-008 implemented pre-moderation as the safe default: every MantraWall post required manual admin approval before appearing on the wall. Stakeholder interviews with campus administrators revealed that **moderation workload** was cited as part of the stigma and operational burden they already face. Pre-moderating every "I'm grateful for my friends today" post creates unnecessary busywork without meaningfully improving safety, since the vast majority of posts on a positive-only wall will be genuinely positive.
+
+At the same time, Dr. Torres's original safety concern (ADR-007/008) — that harmful content could appear even on a positive-only wall — remains valid and must still be addressed.
+
+### Options Considered
+
+1. Keep pre-moderation (ADR-008) — admin reviews every post before it goes live.
+2. Switch to pure post-moderation — all posts go live immediately, admin reviews retroactively.
+3. **Tiered auto-moderation** — use NLP sentiment analysis (VADER, already in the codebase for journal analysis) to auto-approve clearly positive posts, auto-reject clearly harmful/profanity content, and route ambiguous posts to a human review queue.
+
+### Decision
+
+Option 3 — tiered auto-moderation.
+
+### Reason
+
+Option 1 was rejected because it creates the exact admin workload burden flagged in stakeholder interviews, with no proportional safety benefit for clearly positive posts. Option 2 was rejected because it would allow harmful content to be visible, even briefly, to other students — directly contradicting Dr. Torres's safety recommendation.
+
+Option 3 resolves both concerns: clearly positive posts (~70-80% of expected submissions) go live instantly with zero admin work, while ambiguous or harmful content is still caught — either by the NLP filter or by a human reviewer. This is a recognized, defensible moderation pattern ("automated triage with human review for edge cases") used by platforms like YouTube, Reddit, and Discord.
+
+### Design
+
+**Three tiers based on VADER compound score + keyword blocklist:**
+
+| Tier | Condition | Status | Visible to students? |
+|---|---|---|---|
+| Auto-Approve | Compound ≥ 0.3, no blocklist hit | `approved` | ✅ Yes |
+| Auto-Review | Compound between -0.2 and 0.3 (ambiguous) | `review` | ❌ No (author sees "under review") |
+| Auto-Reject | Compound ≤ -0.2, OR blocklist keyword hit | `rejected` | ❌ No (author gets gentle message) |
+
+**Report flow:** When a student reports a live post, the post is NOT automatically hidden. Reports are grouped by post and presented to admin for review. Admin decides: keep visible (dismiss reports) or archive (hide from wall). This prevents report-button abuse.
+
+**New moderation statuses:** `review` (needs admin eyes), `archived` (was live, hidden after report review). Both added to the existing `pending`/`approved`/`rejected`/`flagged` set.
+
+**Notifications:** Students are notified when their post is auto-rejected, admin-rejected, archived, or approved from the review queue, so they can reflect on community guidelines.
+
+### Consequences
+
+- **Advantage:** Dramatically reduces admin workload — only ambiguous posts need manual review.
+- **Advantage:** Preserves Dr. Torres's safety concern — harmful/ambiguous content is never visible without review.
+- **Advantage:** Report flow prevents weaponization of the report button.
+- **Advantage:** Admin still has full visibility of all posts and community activity.
+- **Advantage:** Defensible for thesis defense — "NLP-assisted triage with human review for edge cases."
+- **Disadvantage:** VADER thresholds may need tuning after observing real posts. Initial values (0.3 / -0.2) are conservative.
+- **Disadvantage:** VADER is English-optimized; Filipino-language posts may be classified as ambiguous more often, routing them to human review (which is the safe fallback).
+- **Required follow-up:** Monitor auto-approve rate after deployment and tune thresholds if needed.

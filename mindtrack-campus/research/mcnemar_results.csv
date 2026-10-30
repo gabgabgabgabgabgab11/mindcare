@@ -1,0 +1,2 @@
+both_correct,both_wrong,vader_only_correct,taglish_only_correct,discordant_pairs,mcnemar_statistic,p_value,significant_at_0.05
+9,16,10,15,25,10.0,0.4244,False

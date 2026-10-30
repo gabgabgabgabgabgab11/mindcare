@@ -20,6 +20,11 @@ def list_active_resources(
     return list(db.execute(stmt).scalars().all())
 
 
+def list_resources_for_admin(db: Session) -> list[Resource]:
+    stmt = select(Resource).order_by(Resource.is_active.desc(), Resource.category, Resource.title)
+    return list(db.execute(stmt).scalars().all())
+
+
 def get_active_resource(db: Session, resource_id: uuid.UUID) -> Resource:
     """404s on inactive resources too - an inactive resource does not
     exist from a student's point of view."""

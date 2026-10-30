@@ -24,7 +24,6 @@ from app.services.gad7_service import (
     score_gad7,
 )
 from app.services.qualitative_feedback import get_gad7_feedback
-from app.services.audit_log_repository import log_event
 
 
 router = APIRouter(prefix="/api/v1/assessments/gad7", tags=["assessments"])
@@ -69,7 +68,6 @@ def submit_gad7(
     result = create_assessment_submission(db, profile.id, "gad7", payload.responses, scoring)
     return _to_result_response(result)
 
-
 @router.get("/history", response_model=list[Gad7HistoryItem])
 def get_gad7_history(
     profile: Profile = Depends(require_consent),
@@ -89,20 +87,4 @@ def get_gad7_result(
     return _to_result_response(result)
 
 
-@router.post("", response_model=Gad7ResultResponse, status_code=status.HTTP_201_CREATED)
-def submit_gad7(
-    payload: Gad7SubmitRequest,
-    profile: Profile = Depends(require_consent),
-    db: Session = Depends(get_db),
-):
-    try:
-        scoring = score_phq9(payload.responses)
-    except InvalidPhq9ResponsesError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
 
-    result = create_assessment_submission(db, profile.id, "phq9", payload.responses, scoring)
-    log_event(
-        db, "assessment_submission", "GAD-7 submitted",
-        actor_id=profile.id, metadata={"severity_band": result.severity_band, "escalated": result.escalated},
-    )
-    return _to_result_response(result)

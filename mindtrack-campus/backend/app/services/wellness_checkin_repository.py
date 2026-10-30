@@ -21,12 +21,11 @@ def create_checkin(db: Session, user_id: uuid.UUID, mood_score: int, note: Optio
     return checkin
 
 
-def list_checkins_for_user(db: Session, user_id: uuid.UUID, limit: int = 30) -> list[WellnessCheckIn]:
+def list_checkins_for_user(db: Session, user_id: uuid.UUID) -> list[WellnessCheckIn]:
     stmt = (
         select(WellnessCheckIn)
         .where(WellnessCheckIn.user_id == user_id)
         .order_by(WellnessCheckIn.created_at.desc())
-        .limit(limit)
     )
     return list(db.execute(stmt).scalars().all())
 

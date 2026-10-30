@@ -1,0 +1,3 @@
+model,accuracy,precision_macro,recall_macro,f1_macro
+VADER (English baseline),0.38,0.6019,0.4111,0.3848
+DOST-ASTI RoBERTa-tl (Taglish),0.48,0.4416,0.4787,0.4357

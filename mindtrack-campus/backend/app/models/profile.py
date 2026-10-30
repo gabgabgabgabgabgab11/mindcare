@@ -36,6 +36,11 @@ class Profile(Base):
     role = Column(String, nullable=False, server_default="student")
     year_level = Column(String, nullable=True)
     program = Column(String, nullable=True)
+    section = Column(String, nullable=True)
+    companion_pet = Column(String, nullable=True)
+    # Unlike a browser-local preference, this follows the authenticated
+    # student across devices and is isolated from other users of a device.
+    companion_nickname = Column(String(20), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(
         DateTime(timezone=True),

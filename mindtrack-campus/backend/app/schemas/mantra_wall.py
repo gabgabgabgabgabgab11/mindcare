@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
 POST_TYPES = ("affirmation", "gratitude", "win")
-MODERATION_STATUSES = ("pending", "approved", "rejected", "flagged")
+MODERATION_STATUSES = ("pending", "approved", "rejected", "flagged", "review", "archived")
 MAX_CONTENT_LENGTH = 300
 
 SEEK_ASSISTANCE_NOTICE = (
@@ -51,6 +51,7 @@ class MantraWallPostResponse(BaseModel):
     content: str
     nickname: Optional[str] = None
     moderation_status: str
+    filter_reason: Optional[str] = None
     created_at: datetime
     anonymity_notice: str = ANONYMITY_NOTICE
     seek_assistance_notice: str = SEEK_ASSISTANCE_NOTICE
@@ -78,6 +79,21 @@ class AdminMantraWallReportItem(BaseModel):
     post_moderation_status: str
 
 
+class AdminGroupedReportItem(BaseModel):
+    """Admin-only grouped view — one entry per reported post, with all
+    reports aggregated.  Used for the report-review queue (ADR-011)."""
+    post_id: UUID
+    post_content: str
+    post_type: str
+    post_moderation_status: str
+    post_created_at: datetime
+    filter_reason: Optional[str] = None
+    report_count: int
+    reasons: list[str]
+    reporter_ids: list[UUID]
+    latest_report_at: datetime
+
+
 class MantraWallModerateRequest(BaseModel):
     moderation_status: str
 
@@ -87,3 +103,16 @@ class MantraWallModerateRequest(BaseModel):
         if v not in MODERATION_STATUSES:
             raise ValueError(f"moderation_status must be one of {MODERATION_STATUSES}")
         return v
+
+
+class BulkModerateRequest(BaseModel):
+    """Bulk moderation for multiple posts at once (ADR-011)."""
+    post_ids: list[UUID]
+    moderation_status: str
+
+    @field_validator("moderation_status")
+    @classmethod
+    def status_must_be_valid(cls, v: str) -> str:
+        if v not in MODERATION_STATUSES:
+            raise ValueError(f"moderation_status must be one of {MODERATION_STATUSES}")
+        return v

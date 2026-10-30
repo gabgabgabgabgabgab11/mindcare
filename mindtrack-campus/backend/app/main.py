@@ -27,6 +27,8 @@ from app.api.routes.resources import router as resources_router, admin_router as
 from app.api.routes.mantra_wall import router as mantra_wall_router, admin_router as admin_mantra_wall_router
 from app.api.routes.notifications import router as notifications_router
 from app.api.routes.audit_logs import router as audit_logs_router
+from app.api.routes.admin_analytics import router as admin_analytics_router, wellness_router as admin_wellness_router
+from app.api.routes.profile import router as profile_router
 
 
 
@@ -36,24 +38,28 @@ settings = get_settings()
 
 app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
 
-# --- CORS ---
-# Development: http://localhost:5173 (Vite default) via .env.
-# Production: set CORS_ORIGINS in the deployment environment to the
-# real deployed frontend URL(s) — comma-separated for multiple, e.g.
-# a Vercel production + preview URL. Never "*" — this would allow any
-# website on the internet to make authenticated requests on a
-# logged-in student's behalf.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# --- Rate limiting ---
+# --- Rate limiting (inner middleware) ---
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
+
+# --- CORS (outermost middleware so all responses, errors, and preflights get headers) ---
+cors_origins = [o.strip() for o in settings.cors_origins_list if o.strip()]
+for default_dev in ("http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:3000", "http://127.0.0.1:3000"):
+    if default_dev not in cors_origins:
+        cors_origins.append(default_dev)
+
+cors_kwargs = {
+    "allow_origins": cors_origins,
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+    "expose_headers": ["*"],
+}
+
+if not settings.is_production:
+    cors_kwargs["allow_origin_regex"] = r"^https?://((localhost|127\.0\.0\.1)(:[0-9]+)?|([a-zA-Z0-9-]+\.)*trycloudflare\.com)$"
+
+app.add_middleware(CORSMiddleware, **cors_kwargs)
 
 # --- Consistent error envelope ---
 app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
@@ -76,3 +82,6 @@ app.include_router(mantra_wall_router)
 app.include_router(admin_mantra_wall_router)
 app.include_router(notifications_router)
 app.include_router(audit_logs_router)
+app.include_router(admin_analytics_router)
+app.include_router(admin_wellness_router)
+app.include_router(profile_router)

@@ -1,20 +1,24 @@
 import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.mantra_wall import MantraWallPost, MantraWallReport
+from app.services.content_filter import determine_moderation_status
 
 
 def create_post(db: Session, user_id: uuid.UUID, post_type: str, content: str, nickname: Optional[str]) -> MantraWallPost:
+    moderation_status, filter_reason = determine_moderation_status(content)
     post = MantraWallPost(
         user_id=user_id,
         post_type=post_type,
         content=content,
         nickname=nickname,
-        moderation_status="pending",
+        moderation_status=moderation_status,
+        filter_reason=filter_reason,
     )
     db.add(post)
     db.commit()
@@ -23,9 +27,13 @@ def create_post(db: Session, user_id: uuid.UUID, post_type: str, content: str, n
 
 
 def list_visible_posts(db: Session, requesting_user_id: uuid.UUID) -> list[MantraWallPost]:
-    """A student sees: all approved posts, PLUS their own pending/rejected/
-    flagged posts (so they know their post's status), but never another
-    student's non-approved post."""
+    """A student sees: all approved posts, PLUS their own non-approved
+    posts (so they know their post's status), but never another
+    student's non-approved post.
+
+    Under tiered auto-moderation (ADR-011), 'approved' posts are
+    visible to everyone.  Posts in 'review', 'rejected', or 'archived'
+    are visible only to their author."""
     stmt = (
         select(MantraWallPost)
         .where(
@@ -34,6 +42,13 @@ def list_visible_posts(db: Session, requesting_user_id: uuid.UUID) -> list[Mantr
         )
         .order_by(MantraWallPost.created_at.desc())
     )
+    return list(db.execute(stmt).scalars().all())
+
+
+def list_posts_for_admin(db: Session, status_filter: Optional[str] = None) -> list[MantraWallPost]:
+    stmt = select(MantraWallPost).order_by(MantraWallPost.created_at.desc())
+    if status_filter:
+        stmt = stmt.where(MantraWallPost.moderation_status == status_filter)
     return list(db.execute(stmt).scalars().all())
 
 
@@ -54,6 +69,8 @@ def create_report(db: Session, post_id: uuid.UUID, reporter_id: uuid.UUID, reaso
 
 
 def list_reports_for_admin(db: Session) -> list[dict]:
+    """Original flat report list — kept for backward compatibility with
+    the admin dashboard's recent-reports feed."""
     stmt = (
         select(MantraWallReport, MantraWallPost)
         .join(MantraWallPost, MantraWallReport.post_id == MantraWallPost.id)
@@ -74,9 +91,70 @@ def list_reports_for_admin(db: Session) -> list[dict]:
     ]
 
 
-def moderate_post(db: Session, post_id: uuid.UUID, admin_id: uuid.UUID, new_status: str) -> MantraWallPost:
-    from datetime import datetime, timezone
+def list_grouped_reports_for_admin(
+    db: Session,
+    resolved: bool = False,
+    sort_by: str = "reports_count",
+) -> list[dict]:
+    """Grouped report view — one entry per reported post (ADR-011).
 
+    Args:
+        resolved: If False (default), only unresolved reports.
+        sort_by: 'reports_count' (most-reported first) or 'newest'.
+    """
+    # Subquery: aggregate reports per post
+    report_agg = (
+        select(
+            MantraWallReport.post_id,
+            func.count(MantraWallReport.id).label("report_count"),
+            func.max(MantraWallReport.created_at).label("latest_report_at"),
+        )
+        .where(MantraWallReport.resolved == resolved)
+        .group_by(MantraWallReport.post_id)
+        .subquery()
+    )
+
+    stmt = (
+        select(MantraWallPost, report_agg.c.report_count, report_agg.c.latest_report_at)
+        .join(report_agg, MantraWallPost.id == report_agg.c.post_id)
+    )
+
+    if sort_by == "reports_count":
+        stmt = stmt.order_by(report_agg.c.report_count.desc())
+    else:
+        stmt = stmt.order_by(report_agg.c.latest_report_at.desc())
+
+    rows = db.execute(stmt).all()
+
+    result = []
+    for post, report_count, latest_report_at in rows:
+        # Fetch individual report details for this post
+        reports_stmt = (
+            select(MantraWallReport)
+            .where(MantraWallReport.post_id == post.id)
+            .where(MantraWallReport.resolved == resolved)
+        )
+        reports = list(db.execute(reports_stmt).scalars().all())
+        reasons = list({r.reason for r in reports if r.reason})
+        reporter_ids = [r.reporter_id for r in reports]
+
+        result.append({
+            "post_id": post.id,
+            "post_content": post.content,
+            "post_type": post.post_type,
+            "post_moderation_status": post.moderation_status,
+            "post_created_at": post.created_at,
+            "filter_reason": post.filter_reason,
+            "report_count": report_count,
+            "reasons": reasons,
+            "reporter_ids": reporter_ids,
+            "latest_report_at": latest_report_at,
+        })
+
+    return result
+
+
+def moderate_post(db: Session, post_id: uuid.UUID, admin_id: uuid.UUID, new_status: str) -> MantraWallPost:
     post = get_post_or_404(db, post_id)
     post.moderation_status = new_status
     post.moderated_by = admin_id
@@ -84,3 +162,42 @@ def moderate_post(db: Session, post_id: uuid.UUID, admin_id: uuid.UUID, new_stat
     db.commit()
     db.refresh(post)
     return post
+
+
+def bulk_moderate_posts(
+    db: Session,
+    post_ids: list[uuid.UUID],
+    admin_id: uuid.UUID,
+    new_status: str,
+) -> list[MantraWallPost]:
+    """Moderate multiple posts in a single transaction (ADR-011)."""
+    now = datetime.now(timezone.utc)
+    posts = []
+    for post_id in post_ids:
+        post = get_post_or_404(db, post_id)
+        post.moderation_status = new_status
+        post.moderated_by = admin_id
+        post.moderated_at = now
+        posts.append(post)
+    db.commit()
+    for p in posts:
+        db.refresh(p)
+    return posts
+
+
+def resolve_reports_for_post(db: Session, post_id: uuid.UUID, admin_id: uuid.UUID) -> int:
+    """Mark all unresolved reports for a post as resolved.
+    Returns the number of reports resolved."""
+    now = datetime.now(timezone.utc)
+    stmt = (
+        select(MantraWallReport)
+        .where(MantraWallReport.post_id == post_id)
+        .where(MantraWallReport.resolved == False)  # noqa: E712
+    )
+    reports = list(db.execute(stmt).scalars().all())
+    for report in reports:
+        report.resolved = True
+        report.resolved_by = admin_id
+        report.resolved_at = now
+    db.commit()
+    return len(reports)

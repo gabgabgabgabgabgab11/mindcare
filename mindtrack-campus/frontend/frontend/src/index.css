@@ -1,8 +1,65 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 html, body, #root {
   width: 100%;
   min-height: 100vh;
   margin: 0;
   padding: 0;
+}
+
+.streak-card-celebrating {
+  --streak-rest-border: #f3f4f6;
+  animation: mindcare-streak-card-glow 1700ms ease-out both;
+}
+
+.dark .streak-card-celebrating {
+  --streak-rest-border: #1e293b;
+}
+
+.streak-count-pop {
+  transform-origin: left center;
+  animation: mindcare-streak-count-pop 850ms cubic-bezier(.2, .9, .3, 1.25) both;
+}
+
+.streak-flame-ignite {
+  display: inline-block;
+  transform-origin: 50% 85%;
+  animation: mindcare-streak-flame 1300ms ease-in-out both;
+}
+
+@keyframes mindcare-streak-card-glow {
+  0%, 100% {
+    border-color: var(--streak-rest-border);
+    box-shadow: none;
+  }
+  22%, 68% {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgb(245 158 11 / 14%), 0 12px 34px rgb(245 158 11 / 16%);
+  }
+}
+
+@keyframes mindcare-streak-count-pop {
+  0% { transform: translateY(0) scale(1); }
+  38% { transform: translateY(-5px) scale(1.13); }
+  68% { transform: translateY(1px) scale(.98); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes mindcare-streak-flame {
+  0%, 100% { transform: translateY(0) rotate(0) scale(1); filter: drop-shadow(0 0 0 rgb(245 158 11 / 0%)); }
+  18% { transform: translateY(-2px) rotate(-8deg) scale(1.15); }
+  36% { transform: translateY(0) rotate(7deg) scale(1.22); filter: drop-shadow(0 0 8px rgb(245 158 11 / 70%)); }
+  56% { transform: translateY(-3px) rotate(-5deg) scale(1.1); }
+  76% { transform: translateY(0) rotate(3deg) scale(1.04); filter: drop-shadow(0 0 4px rgb(245 158 11 / 45%)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak-card-celebrating,
+  .streak-count-pop,
+  .streak-flame-ignite {
+    animation-duration: 1ms;
+  }
 }

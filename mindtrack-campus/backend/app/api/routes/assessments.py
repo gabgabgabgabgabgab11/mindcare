@@ -55,21 +55,6 @@ def get_phq9_questions():
     return Phq9QuestionsResponse(scale=RESPONSE_SCALE, items=PHQ9_ITEMS)
 
 
-@router.post("", response_model=Phq9ResultResponse, status_code=status.HTTP_201_CREATED)
-def submit_phq9(
-    payload: Phq9SubmitRequest,
-    profile: Profile = Depends(require_consent),
-    db: Session = Depends(get_db),
-):
-    try:
-        scoring = score_phq9(payload.responses)
-    except InvalidPhq9ResponsesError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
-
-    result = create_assessment_submission(db, profile.id, "phq9", payload.responses, scoring)
-    return _to_result_response(result)
-
-
 @router.get("/history", response_model=list[Phq9HistoryItem])
 def get_phq9_history(
     profile: Profile = Depends(require_consent),

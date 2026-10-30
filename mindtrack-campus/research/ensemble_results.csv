@@ -1,0 +1,51 @@
+text,expected_sentiment,vader_prediction,taglish_prediction,ensemble_prediction
+sobrang saya ko today,positive,neutral,neutral,neutral
+grabe pagod na ako,negative,neutral,negative,negative
+okay lang naman,neutral,positive,positive,positive
+ang daming reqs nakakastress,negative,neutral,negative,negative
+finally tapos na thesis,positive,neutral,neutral,neutral
+nakakastress yung deadline pero kakayanin,neutral,neutral,neutral,neutral
+wala akong tulog dahil sa exams,negative,neutral,negative,negative
+grabe sobrang drained na ako sa acads,negative,negative,negative,negative
+masaya ako ngayon kasi tapos na yung project,positive,neutral,neutral,neutral
+ang hirap ng buhay estudyante minsan,negative,neutral,negative,negative
+okay naman ako pero ang dami talagang requirements,neutral,positive,neutral,positive
+gusto ko na matapos ang sem na 'to,neutral,neutral,neutral,neutral
+proud ako sa sarili ko ngayon,positive,positive,neutral,positive
+di ko na kaya ang dami ng ginagawa,negative,neutral,negative,negative
+chill lang ako today,positive,neutral,positive,positive
+grabe sobrang antok ko,negative,neutral,negative,negative
+ayos lang normal day,neutral,neutral,positive,positive
+finally nakapagpahinga ako ngayong weekend,positive,neutral,neutral,neutral
+sobrang stress ko sa thesis defense,negative,negative,negative,negative
+medyo lost ako sa buhay ngayon,negative,negative,negative,negative
+happy ako kasi may bonding kami ng friends ko,positive,positive,neutral,positive
+nakakapagod pero fulfilling naman,neutral,neutral,neutral,neutral
+wala akong ganang gumawa ng kahit ano,negative,neutral,negative,negative
+grabe ang saya ng bonding namin kanina,positive,neutral,neutral,neutral
+puyat ako ngayon dahil sa requirements,negative,neutral,positive,positive
+hindi na ako makapag-focus sa studies ko,negative,neutral,negative,negative
+sana matapos na itong sem,neutral,neutral,neutral,neutral
+excited ako for the weekend,positive,positive,neutral,positive
+napaka-overwhelming ng lahat,negative,neutral,neutral,neutral
+salamat sa mga tumulong sa akin,positive,neutral,neutral,neutral
+kaya ko pa naman ito,neutral,neutral,positive,positive
+halos hindi na ako makatulog sa stress,negative,negative,negative,negative
+masaya at kampante ako ngayon,positive,neutral,neutral,neutral
+grabe ang init ng ulo ko kanina,negative,neutral,negative,negative
+relax lang ako ngayon,positive,positive,neutral,positive
+tuwang-tuwa ako sa resulta ng exam ko,positive,neutral,neutral,neutral
+grabe ang ganda ng araw ko ngayon,positive,neutral,neutral,neutral
+nakakatuwa yung nangyari kanina,positive,neutral,neutral,neutral
+sobrang thankful ako sa lahat ng tumulong,positive,positive,neutral,positive
+natapos ko na ang lahat ng requirements ko,positive,neutral,neutral,neutral
+ang saya saya ko ngayon walang rason,positive,neutral,neutral,neutral
+grabe nakakapagod pero okay lang masaya naman,neutral,positive,neutral,positive
+hindi ko alam kung okey pa rin ba ako,neutral,neutral,negative,negative
+wala lang normal na araw lang ito,neutral,neutral,positive,positive
+medyo okay na ako ngayon kumpara kanina,neutral,positive,neutral,positive
+di ko gets kung bakit ganito ang nararamdaman ko,neutral,neutral,negative,negative
+sobrang hirap mag-focus ngayon hindi ko maintindihan,negative,neutral,negative,negative
+parang walang katapusan ang mga gawain ko,negative,neutral,negative,negative
+grabe ang bigat ng pakiramdam ko today,negative,neutral,neutral,neutral
+hindi ko na talaga kaya ang pressure,negative,negative,negative,negative

@@ -152,6 +152,7 @@ def test_submit_as_admin_returns_403():
 
 def test_submit_response_never_contains_total_score():
     student_id = str(uuid.uuid4())
+    saved_objects = []
 
     def override_user():
         return SupabaseUser(
@@ -167,7 +168,7 @@ def test_submit_response_never_contains_total_score():
             )
 
         def add(self, obj):
-            pass
+            saved_objects.append(obj)
 
         def flush(self):
             pass
@@ -216,6 +217,7 @@ def test_submit_response_never_contains_total_score():
         assert "total_score" not in body
         assert "qualitative_feedback" in body
         assert len(body["qualitative_feedback"]) > 0
+        assert [obj.assessment_code for obj in saved_objects] == ["gad7", "gad7"]
 
     finally:
         app.dependency_overrides.clear()

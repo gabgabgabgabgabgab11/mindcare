@@ -3,6 +3,8 @@
 
 export type Role = 'student' | 'admin';
 
+export type CompanionPet = 'dog' | 'cat' | 'capybara' | 'rabbit';
+
 // auth.py -> MeResponse
 export interface MeResponse {
   id: string;
@@ -10,6 +12,17 @@ export interface MeResponse {
   role: Role;
   year_level: string | null;
   program: string | null;
+  section: string | null;
+  companion_pet: CompanionPet | null;
+  companion_nickname: string | null;
+}
+
+export interface ProfileUpdateRequest {
+  program?: string;
+  year_level?: number;
+  section?: string;
+  companion_pet?: string | null;
+  companion_nickname?: string | null;
 }
 
 // wellness_checkin.py
@@ -69,6 +82,17 @@ export interface ConsentWithdrawResponse {
   message: string;
 }
 
+// notification.py
+export interface Notification {
+  id: string;
+  notification_type: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+}
+
 // assessment.py
 export interface AssessmentQuestions {
   assessment_code: string;
@@ -124,7 +148,7 @@ export interface JournalAnalysis {
 
 // mantra_wall.py
 export type MantraPostType = 'affirmation' | 'gratitude' | 'win';
-export type ModerationStatus = 'pending' | 'approved' | 'rejected' | 'flagged';
+export type ModerationStatus = 'pending' | 'approved' | 'rejected' | 'flagged' | 'review' | 'archived';
 
 export interface MantraWallPost {
   id: string;
@@ -132,9 +156,10 @@ export interface MantraWallPost {
   content: string;
   nickname: string | null;
   moderation_status: ModerationStatus;
+  filter_reason?: string | null;
   created_at: string;
-  anonymity_notice: string;
-  seek_assistance_notice: string;
+  anonymity_notice?: string;
+  seek_assistance_notice?: string;
 }
 
 export interface MantraWallPostCreateRequest {
@@ -157,19 +182,26 @@ export interface AdminMantraWallReportItem {
   post_moderation_status: ModerationStatus;
 }
 
+export interface AdminGroupedReportItem {
+  post_id: string;
+  post_content: string;
+  post_type: MantraPostType;
+  post_moderation_status: ModerationStatus;
+  post_created_at: string;
+  filter_reason: string | null;
+  report_count: number;
+  reasons: string[];
+  reporter_ids: string[];
+  latest_report_at: string;
+}
+
 export interface MantraWallModerateRequest {
   moderation_status: ModerationStatus;
 }
 
-// notification.py
-export interface Notification {
-  id: string;
-  notification_type: string;
-  title: string;
-  message: string;
-  is_read: boolean;
-  read_at: string | null;
-  created_at: string;
+export interface BulkModerateRequest {
+  post_ids: string[];
+  moderation_status: ModerationStatus;
 }
 
 // resource.py
@@ -210,3 +242,110 @@ export interface AuditLog {
   created_at: string;
 }
 
+// admin_analytics.py
+export interface OverviewKPIs {
+  pending_moderation_count: number;
+  approved_posts_count: number;
+  archived_count: number;
+  active_resources_count: number;
+  audit_events_7d_count: number;
+  unresolved_reports_count: number;
+  mantra_post_type_distribution: Record<string, number>;
+}
+
+export interface AuditTimelineEntry {
+  date: string;
+  count: number;
+  by_type: Record<string, number>;
+}
+
+export interface AuditTimelineResponse {
+  timeline: AuditTimelineEntry[];
+}
+
+export interface ModerationTimelineEntry {
+  date: string;
+  pending: number;
+  approved: number;
+  rejected: number;
+  review: number;
+  archived: number;
+}
+
+export interface ModerationTimelineResponse {
+  timeline: ModerationTimelineEntry[];
+}
+
+// ── Wellness Analytics (admin) ─────────────────────────────────────────────
+
+export interface WellnessOverview {
+  total_students: number;
+  assessment_count: number;
+  assessment_participation_rate: number | null;
+  checkin_count: number;
+  checkin_participation_rate: number | null;
+  journal_count: number;
+  journal_participation_rate: number | null;
+  follow_up_flags: number;
+  cohort_hidden: boolean;
+  min_cohort_size: number;
+}
+
+export interface SeverityDistribution {
+  minimal: number;
+  mild: number;
+  moderate: number;
+  moderately_severe: number;
+  severe: number;
+}
+
+export interface WellnessScreening {
+  sample_size: number;
+  average_phq9: number | null;
+  average_gad7: number | null;
+  phq9_distribution: SeverityDistribution;
+  gad7_distribution: SeverityDistribution;
+  cohort_hidden: boolean;
+}
+
+export interface GroupMetric {
+  group_name: string;
+  student_count: number;
+  assessment_count: number;
+  average_phq9: number | null;
+  average_gad7: number | null;
+  cohort_hidden: boolean;
+}
+
+export interface GroupAnalytics {
+  groups: GroupMetric[];
+}
+
+export interface TrendPoint {
+  date: string;
+  average_phq9: number | null;
+  average_gad7: number | null;
+  assessment_count: number;
+}
+
+export interface WellnessTrend {
+  trend: TrendPoint[];
+}
+
+export interface WellnessFilterOptions {
+  programs: string[];
+  year_levels: string[];
+  sections: string[];
+  academic_years: string[];
+}
+
+export interface WellnessAnalyticsFilters {
+  program: string;
+  year_level: string;
+  section: string;
+  academic_year: string;
+  semester: string;
+  date_range: string; // 'all' | '7d' | '30d' | '90d' | 'semester' | 'custom'
+  start_date: string;
+  end_date: string;
+}

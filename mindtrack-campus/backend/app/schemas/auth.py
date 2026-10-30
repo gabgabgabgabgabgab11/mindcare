@@ -9,6 +9,9 @@ class MeResponse(BaseModel):
     role: str
     year_level: Optional[str]
     program: Optional[str]
+    section: Optional[str]
+    companion_pet: Optional[str] = None
+    companion_nickname: Optional[str] = None
 
     class Config:
         from_attributes = True

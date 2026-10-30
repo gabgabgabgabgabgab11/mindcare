@@ -1,137 +1,265 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { MOOD_OPTIONS } from '../constants/mood';
-import type { MoodScore } from '../types';
+import { listJournalEntries, listWellnessCheckIns, signConsent, submitWellnessCheckIn } from '../services/studentApi';
+import { studentCache } from '../services/studentCache';
+import { getActivityStreak, queueStreakCelebration } from '../utils/activityStreak';
+import { useAuth } from '../contexts/useAuth';
+import { ThemeToggle } from '../components/ThemeToggle';
+import type { JournalEntry, MoodScore, WellnessCheckInResponse } from '../types';
 
 export const Onboarding = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const { hasActiveConsent } = useAuth();
+
+  // If user already has consent, start at Step 4 (Mood Check-in).
+  // New students without consent start at Step 1 (Welcome & Consent).
+  const [step, setStep] = useState<number>(() => (hasActiveConsent === true ? 4 : 1));
   const [isFading, setIsFading] = useState(false);
+  const [isSavingConsent, setIsSavingConsent] = useState(false);
+  const [isSavingMood, setIsSavingMood] = useState(false);
+  const [selectedMoodScore, setSelectedMoodScore] = useState<MoodScore | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const checkedConsentRef = useRef(false);
+
+  // If hasActiveConsent was still resolving on initial render, transition to step 4 once confirmed
+  useEffect(() => {
+    if (!checkedConsentRef.current && hasActiveConsent === true) {
+      checkedConsentRef.current = true;
+      setStep(4);
+    }
+  }, [hasActiveConsent]);
 
   // Smooth transition handler
-  const handleNext = () => {
+  const handleNext = async () => {
+    setError(null);
+    if (step === 3) {
+      checkedConsentRef.current = true;
+      setIsSavingConsent(true);
+      try {
+        await signConsent();
+      } catch {
+        setError('We could not save your consent. Please try again.');
+        setIsSavingConsent(false);
+        return;
+      } finally {
+        setIsSavingConsent(false);
+      }
+    }
     setIsFading(true);
-    setTimeout(() => {
-      setStep(prev => prev + 1);
-      setIsFading(false);
-    }, 300);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    setStep((prev) => prev + 1);
+    setIsFading(false);
   };
 
   const handleFinish = (route: string) => {
     navigate(route);
   };
 
-  const handleMoodSelect = (score: MoodScore) => {
-    // TODO(23D): persist the onboarding mood via POST /wellness/checkins.
-    void score;
-    handleNext();
+  const handleMoodSelect = async (score: MoodScore) => {
+    setError(null);
+    setSelectedMoodScore(score);
+    setIsSavingMood(true);
+    try {
+      let journalEntries: JournalEntry[] = studentCache.dashboard?.journalEntries ?? [];
+      let checkIns: WellnessCheckInResponse[] = studentCache.dashboard?.checkIns ?? [];
+      if (!studentCache.dashboard) {
+        try {
+          [journalEntries, checkIns] = await Promise.all([listJournalEntries(), listWellnessCheckIns()]);
+        } catch {
+          // Do not block onboarding if streak history cannot be loaded.
+        }
+      }
+
+      const previousStreak = getActivityStreak(journalEntries, checkIns);
+      const result = await submitWellnessCheckIn({ mood_score: score });
+      const nextCheckIns = [...checkIns, result];
+      const nextStreak = getActivityStreak(journalEntries, nextCheckIns);
+      if (studentCache.dashboard) studentCache.dashboard.checkIns = nextCheckIns;
+      if (nextStreak > previousStreak) queueStreakCelebration();
+      setIsFading(true);
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      setStep(5);
+      setIsFading(false);
+    } catch {
+      setError('Your check-in could not be saved. Please try again.');
+    } finally {
+      setIsSavingMood(false);
+      setSelectedMoodScore(null);
+    }
   };
 
-  // Content for the first 3 information screens
+  // Content for the first 3 information screens (for new students)
   const screens = [
     {
       icon: '🌿',
       title: 'Welcome to MindCare',
       text: 'This is your safe, private space for wellness check-ins, reflection, and support. MindCare is designed for PUP Santa Maria students who want to stay in tune with their emotional well-being.',
-      button: 'Next'
+      button: 'Next',
     },
     {
       icon: '📋',
       title: 'How it works',
       text: 'You can take short wellness screenings (PHQ-9, GAD-7), write in your journal, celebrate your small wins, and connect with campus counseling — all in one place.',
-      button: 'Next'
+      button: 'Next',
     },
     {
       icon: '🔒',
       title: 'Your privacy matters',
       text: 'Everything you share here is confidential and encrypted. MindCare is not a diagnostic tool. It will never label you or share your personal responses without your consent.',
-      button: 'Get started'
-    }
+      button: 'Get started',
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8F9FE] flex flex-col items-center justify-center p-6 relative">
-      
-      {/* Container with beautiful fade transitions */}
-      <div className={`w-full max-w-md transition-all duration-300 ease-in-out ${isFading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-        
-        {/* Intro Screens (Steps 1, 2, 3) */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 relative transition-colors duration-200">
+      {/* Quick Theme Toggle */}
+      <div className="absolute top-4 right-4 z-30">
+        <ThemeToggle variant="pill" />
+      </div>
+
+      {/* Decorative ambient background glows */}
+      <div className="absolute top-[10%] left-[-10%] w-96 h-96 bg-brand-200/50 dark:bg-brand-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-50 pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[10%] w-96 h-96 bg-brand-200/50 dark:bg-brand-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-50 pointer-events-none"></div>
+
+      {/* Container with smooth fade transitions */}
+      <div className={`w-full max-w-md transition-all duration-300 ease-in-out relative z-10 ${isFading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+
+        {/* Intro Screens (Steps 1, 2, 3 - New Accounts Only) */}
         {step <= 3 && (
-          <Card className="p-8 md:p-12 rounded-3xl shadow-lg border-white/60 bg-white/80 backdrop-blur-xl flex flex-col items-center text-center relative overflow-hidden">
+          <div className="p-8 md:p-12 rounded-3xl shadow-xl shadow-brand-950/5 dark:shadow-2xl dark:shadow-black/50 border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl flex flex-col items-center text-center relative overflow-hidden transition-colors">
             <div className="text-6xl mb-6">{screens[step - 1].icon}</div>
-            <h1 className="text-2xl font-black text-purple-900 mb-4">{screens[step - 1].title}</h1>
-            <p className="text-gray-500 text-sm leading-relaxed mb-10">{screens[step - 1].text}</p>
-            
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-4">{screens[step - 1].title}</h1>
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-10">{screens[step - 1].text}</p>
+
             {/* Pagination Dots */}
             <div className="flex gap-2 mb-8">
-              {[1, 2, 3].map(i => (
-                <div key={i} className={`w-2 h-2 rounded-full transition-all ${step === i ? 'bg-purple-600 w-4' : 'bg-purple-200'}`} />
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className={`h-2 rounded-full transition-all ${
+                    step === i ? 'bg-brand-600 dark:bg-brand-500 w-5' : 'bg-slate-200 dark:bg-slate-700 w-2'
+                  }`}
+                />
               ))}
             </div>
 
-            <Button onClick={handleNext} variant="primary" className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-12 py-3 shadow-md border-none text-sm">
-              {screens[step - 1].button}
+            <Button
+              onClick={handleNext}
+              variant="primary"
+              isLoading={isSavingConsent}
+              disabled={isSavingConsent}
+              className="bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl px-12 py-3.5 shadow-lg shadow-brand-600/25 border-none text-sm font-semibold transition-all cursor-pointer"
+            >
+              {isSavingConsent ? 'Saving Consent...' : screens[step - 1].button}
             </Button>
-          </Card>
+            {error && <p className="mt-4 text-center text-sm font-bold text-rose-600 dark:text-rose-400">{error}</p>}
+          </div>
         )}
 
-        {/* Step 4: Mood Check-in */}
+        {/* Step 4: Mood Check-in (Appears Every Login) */}
         {step === 4 && (
-          <div className="flex flex-col items-center">
-            <h1 className="text-3xl font-black text-purple-900 mb-2 text-center flex flex-col items-center gap-3">
-              <span className="text-blue-500 text-4xl">💙</span>
-              How are you feeling today?
-            </h1>
-            <p className="text-gray-500 text-sm mb-8 text-center">Take a moment to check in with yourself before we begin.</p>
-            
-            <div className="w-full flex flex-col gap-3">
-              {MOOD_OPTIONS.map((option) => (
+          <div className="flex flex-col items-center w-full">
+            <div className="w-full p-6 md:p-8 rounded-3xl shadow-xl shadow-brand-950/5 dark:shadow-2xl dark:shadow-black/50 border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl transition-colors">
+              <div className="flex flex-col items-center text-center mb-6">
+                <span className="text-4xl mb-2">💙</span>
+                <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                  How are you feeling today?
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                  Take a moment to check in with yourself before we begin.
+                </p>
+              </div>
+
+              <div className="w-full flex flex-col gap-3">
+                {MOOD_OPTIONS.map((option) => {
+                  const isThisSelected = selectedMoodScore === option.score;
+                  return (
+                    <button
+                      key={option.score}
+                      onClick={() => handleMoodSelect(option.score)}
+                      disabled={isSavingMood}
+                      className={`w-full border p-4 rounded-2xl text-left text-sm font-bold transition-all shadow-xs flex items-center justify-between cursor-pointer ${
+                        isThisSelected
+                          ? 'border-brand-600 bg-brand-50/90 dark:bg-brand-950/50 text-brand-900 dark:text-brand-200 ring-2 ring-brand-500/20'
+                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-slate-800 disabled:opacity-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{option.emoji}</span>
+                        <span className="font-semibold">{option.label}</span>
+                      </div>
+                      {isThisSelected && isSavingMood && (
+                        <span className="text-xs text-brand-600 dark:text-brand-400 font-semibold animate-pulse">Saving...</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {error && <p className="mt-4 text-center text-sm font-bold text-rose-600 dark:text-rose-400">{error}</p>}
+
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
                 <button
-                  key={option.score}
-                  onClick={() => handleMoodSelect(option.score)}
-                  className="w-full bg-white border border-gray-200 p-4 rounded-2xl text-left text-sm font-bold text-gray-700 hover:border-purple-400 hover:bg-purple-50 transition-all shadow-sm flex items-center gap-3"
+                  type="button"
+                  onClick={() => handleFinish('/dashboard')}
+                  className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
-                  <span className="text-xl">{option.emoji}</span>
-                  {option.label}
+                  Skip to Dashboard &rarr;
                 </button>
-              ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Step 5: What to check today? */}
+        {/* Step 5: What would you like to check today? (Screening Prompt) */}
         {step === 5 && (
-          <div className="flex flex-col items-center">
-            <Card className="w-full p-6 md:p-8 rounded-3xl shadow-lg border-white/60 bg-white/80 backdrop-blur-xl">
-              <h2 className="text-xl font-black text-purple-900 mb-2">What would you like to check today?</h2>
-              <p className="text-gray-500 text-xs mb-6 leading-relaxed">
-                These questionnaires are standardized screening tools designed to help you reflect on your current experiences. They are not used to diagnose you.
+          <div className="flex flex-col items-center w-full">
+            <div className="w-full p-6 md:p-8 rounded-3xl shadow-xl shadow-brand-950/5 dark:shadow-2xl dark:shadow-black/50 border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl transition-colors">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">
+                What would you like to check today?
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 text-xs mb-6 leading-relaxed">
+                These standardized screening tools help you reflect on your current experiences. They are confidential and not used to diagnose you.
               </p>
-              
+
               <div className="flex flex-col gap-3 mb-8">
-                <button onClick={() => handleFinish('/assessments')} className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-transparent bg-gray-50 hover:bg-purple-50 hover:border-purple-200 transition-all">
-                  <span className="text-2xl mb-1">🌙</span>
-                  <span className="font-bold text-gray-900 text-sm">PHQ-9</span>
-                  <span className="text-[10px] text-gray-500">Mood & depressive symptoms</span>
+                <button
+                  onClick={() => navigate('/assessments', { state: { type: 'PHQ-9' } })}
+                  className="flex flex-col items-center justify-center p-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 hover:bg-brand-50/70 dark:hover:bg-brand-950/40 hover:border-brand-300 dark:hover:border-brand-500 transition-all cursor-pointer group"
+                >
+                  <span className="text-3xl mb-1.5 transition-transform group-hover:scale-110">🌙</span>
+                  <span className="font-bold text-slate-900 dark:text-white text-sm">PHQ-9</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Mood &amp; depressive symptoms</span>
                 </button>
-                <button onClick={() => handleFinish('/assessments')} className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-transparent bg-gray-50 hover:bg-purple-50 hover:border-purple-200 transition-all">
-                  <span className="text-2xl mb-1">🌀</span>
-                  <span className="font-bold text-gray-900 text-sm">GAD-7</span>
-                  <span className="text-[10px] text-gray-500">Anxiety symptoms</span>
+                <button
+                  onClick={() => navigate('/assessments', { state: { type: 'GAD-7' } })}
+                  className="flex flex-col items-center justify-center p-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 hover:bg-brand-50/70 dark:hover:bg-brand-950/40 hover:border-brand-300 dark:hover:border-brand-500 transition-all cursor-pointer group"
+                >
+                  <span className="text-3xl mb-1.5 transition-transform group-hover:scale-110">🌀</span>
+                  <span className="font-bold text-slate-900 dark:text-white text-sm">GAD-7</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Anxiety symptoms</span>
                 </button>
               </div>
 
               <div className="flex gap-3">
-                <Button onClick={() => handleFinish('/dashboard')} variant="secondary" className="flex-1 bg-white border-gray-200 text-gray-600 rounded-xl text-xs py-3">
+                <Button
+                  onClick={() => handleFinish('/dashboard')}
+                  variant="secondary"
+                  className="flex-1 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs py-3.5 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
                   Go to Dashboard
                 </Button>
-                <Button onClick={() => handleFinish('/assessments')} variant="primary" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white border-none rounded-xl text-xs py-3">
+                <Button
+                  onClick={() => handleFinish('/assessments')}
+                  variant="primary"
+                  className="flex-1 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white border-none rounded-xl text-xs py-3.5 font-semibold shadow-lg shadow-brand-600/25 transition-all"
+                >
                   Continue
                 </Button>
               </div>
-            </Card>
+            </div>
           </div>
         )}
 

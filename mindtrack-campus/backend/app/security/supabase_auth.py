@@ -1,10 +1,7 @@
 from typing import Optional
-from sqlalchemy.orm import Session
-from app.db.session import get_db
-from app.services.audit_log_repository import log_event
 
 import httpx
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Header, HTTPException, status
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -44,6 +41,7 @@ def verify_supabase_token(token: str) -> SupabaseUser:
                 "apikey": settings.SUPABASE_ANON_KEY,
             },
             timeout=5.0,
+            trust_env=False,
         )
     except httpx.RequestError:
         raise HTTPException(
@@ -68,29 +66,3 @@ def get_current_supabase_user(
     Does not touch our database — see profile_service for that."""
     token = _extract_bearer_token(authorization)
     return verify_supabase_token(token)
-
-def verify_supabase_token(token: str, db: Session) -> SupabaseUser:
-    try:
-        response = httpx.get(
-            f"{settings.SUPABASE_URL}/auth/v1/user",
-            headers={"Authorization": f"Bearer {token}", "apikey": settings.SUPABASE_ANON_KEY},
-            timeout=5.0,
-        )
-    except httpx.RequestError:
-        log_event(db, "failed_authentication", "Token verification network error", actor_id=None)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not verify authentication token")
-
-    if response.status_code != 200:
-        log_event(db, "failed_authentication", "Invalid or expired token presented", actor_id=None)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired authentication token")
-
-    data = response.json()
-    return SupabaseUser(id=data["id"], email=data.get("email"))
-
-
-def get_current_supabase_user(
-    authorization: Optional[str] = Header(default=None),
-    db: Session = Depends(get_db),
-) -> SupabaseUser:
-    token = _extract_bearer_token(authorization)
-    return verify_supabase_token(token, db)
