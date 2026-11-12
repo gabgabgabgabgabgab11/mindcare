@@ -28,6 +28,7 @@ import { AdminAnalytics } from './pages/AdminAnalytics';
 import { AboutUs } from './pages/AboutUs';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
+import { Landing } from './pages/Landing';
 function App() {
   return (
     <ThemeProvider>
@@ -35,11 +36,13 @@ function App() {
         <BrowserRouter>
           <Routes>
             {/* Public Route */}
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/create-account" element={<CreateAccount />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/about" element={<AboutUs />} />
             
             {/* ========================================== */}
             {/* FULL SCREEN PROTECTED ROUTES (No Layout)   */}
@@ -64,7 +67,6 @@ function App() {
                 <Route path="/resources" element={<Resources />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/support" element={<ProfessionalSupport />} />
-                <Route path="/about" element={<AboutUs />} />
                 <Route path="/profile" element={<Profile />} />   
                 <Route path="/profile/privacy" element={<PrivacySettings />} />
               </Route>
@@ -83,7 +85,7 @@ function App() {
             </Route>
 
             {/* Catch-All */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

@@ -63,3 +63,385 @@ html, body, #root {
     animation-duration: 1ms;
   }
 }
+
+/* Public landing & about page: buttery-smooth scroll reveals & living ambient background */
+.landing-page, .about-page {
+  scroll-behavior: smooth;
+}
+
+/* Hero Entrance Animations (on page load) */
+@keyframes hero-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(28px);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.hero-fade-1 { animation: hero-fade-up 1.1s cubic-bezier(0.16, 1, 0.3, 1) 60ms both; }
+.hero-fade-2 { animation: hero-fade-up 1.1s cubic-bezier(0.16, 1, 0.3, 1) 180ms both; }
+.hero-fade-3 { animation: hero-fade-up 1.1s cubic-bezier(0.16, 1, 0.3, 1) 300ms both; }
+.hero-fade-4 { animation: hero-fade-up 1.1s cubic-bezier(0.16, 1, 0.3, 1) 420ms both; }
+.hero-fade-5 { animation: hero-fade-up 1.1s cubic-bezier(0.16, 1, 0.3, 1) 540ms both; }
+
+/* Slower, buttery-smooth move-in + fade animation for elements on scroll */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(48px);
+  filter: blur(8px);
+  transition:
+    opacity 1.3s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.3s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 1.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s ease;
+  will-change: opacity, transform, filter;
+}
+
+.reveal-on-scroll.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* Stagger delay utilities */
+.delay-100 { transition-delay: 140ms; }
+.delay-200 { transition-delay: 280ms; }
+.delay-300 { transition-delay: 420ms; }
+.delay-400 { transition-delay: 560ms; }
+.delay-500 { transition-delay: 700ms; }
+
+/* Living, breathing blurred background circles that bounce and pulse */
+.alive-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(52px);
+  will-change: transform;
+}
+
+.alive-orb-1 {
+  animation: orb-alive-1 7.5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.alive-orb-2 {
+  animation: orb-alive-2 8.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.alive-orb-3 {
+  animation: orb-alive-3 6.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.alive-orb-4 {
+  animation: orb-alive-4 9.5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+@keyframes orb-alive-1 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  35% { transform: translate3d(36px, -28px, 0) scale(1.16); }
+  70% { transform: translate3d(-24px, 32px, 0) scale(0.92); }
+}
+
+@keyframes orb-alive-2 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  30% { transform: translate3d(-38px, 32px, 0) scale(1.18); }
+  65% { transform: translate3d(28px, -24px, 0) scale(0.88); }
+}
+
+@keyframes orb-alive-3 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  40% { transform: translate3d(30px, 42px, 0) scale(1.2); }
+  75% { transform: translate3d(-34px, -24px, 0) scale(0.86); }
+}
+
+@keyframes orb-alive-4 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  38% { transform: translate3d(-32px, -34px, 0) scale(1.14); }
+  72% { transform: translate3d(36px, 24px, 0) scale(0.92); }
+}
+
+/* The Single MindCare Traveling Companion Guide */
+.scroll-companion {
+  --companion-x: 0px;
+  --companion-y: 0px;
+  --companion-scale: 0.88;
+  --companion-dir: 1;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  pointer-events: none;
+  transform: translate3d(var(--companion-x), var(--companion-y), 0) scale(var(--companion-scale));
+  transition:
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.45s ease-out;
+  will-change: transform, opacity;
+}
+
+.scroll-companion.is-docked {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scroll-companion.is-docked .scroll-companion-bubble {
+  opacity: 0;
+  transform: translateY(8px) scale(0.85);
+  pointer-events: none;
+}
+
+.scroll-companion.is-active {
+  opacity: 1;
+}
+
+/* Only the pet image gets flipped with direction */
+.scroll-companion-pet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scaleX(var(--companion-dir));
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 14px 16px rgb(6 78 59 / 18%));
+}
+
+.scroll-companion-img {
+  display: block;
+  width: clamp(64px, 9vw, 92px);
+  height: auto;
+  object-fit: contain;
+  animation: companion-gentle-bob 4.5s ease-in-out infinite;
+}
+
+/* Speech bubble is NEVER inverted - always left-to-right */
+.scroll-companion-bubble {
+  position: absolute;
+  top: -2.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 15rem;
+  border: 1px solid rgb(167 243 208);
+  border-radius: 9999px;
+  padding: 0.42rem 0.9rem;
+  background: rgb(255 255 255 / 96%);
+  color: #047857;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px rgb(6 78 59 / 14%);
+  backdrop-filter: blur(12px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: none;
+  direction: ltr !important;
+  unicode-bidi: normal !important;
+}
+
+/* When companion is anchored on the right (mobile), align bubble so it extends toward the center */
+.scroll-companion.is-facing-left .scroll-companion-bubble {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.dark .scroll-companion-bubble {
+  border-color: rgb(6 78 59 / 80%);
+  background: rgb(15 23 42 / 96%);
+  color: #6ee7b7;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 40%);
+}
+
+@keyframes companion-gentle-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+/* Hero scene & pet cluster styles */
+.landing-scene {
+  animation: landing-scene-in 1000ms cubic-bezier(.16, 1, .3, 1) 150ms both;
+}
+
+.landing-pet {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 2rem;
+  background: rgb(255 255 255 / 75%);
+  box-shadow: 0 18px 45px rgb(16 90 68 / 12%);
+  backdrop-filter: blur(14px);
+}
+
+.dark .landing-pet {
+  background: rgb(15 23 42 / 75%);
+  box-shadow: 0 18px 45px rgb(0 0 0 / 30%);
+}
+
+.landing-pet img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 12px rgb(15 73 56 / 16%));
+}
+
+/* Default home of the Capybara in the hero card */
+.landing-pet-main {
+  z-index: 2;
+  inset: 19% 22% 5% 10%;
+  padding: 1.5rem;
+  animation: landing-float 5.5s ease-in-out infinite;
+}
+
+.landing-pet-rabbit {
+  z-index: 3;
+  top: 4%;
+  right: 6%;
+  width: 31%;
+  height: 31%;
+  padding: 0.75rem;
+  animation: landing-float 5s ease-in-out -0.7s infinite;
+}
+
+.landing-pet-cat {
+  z-index: 3;
+  right: 1%;
+  bottom: 4%;
+  width: 27%;
+  height: 27%;
+  padding: 0.75rem;
+  animation: landing-float 5.3s ease-in-out -1.5s infinite;
+}
+
+.landing-pet-otter {
+  z-index: 1;
+  top: 30%;
+  left: 0;
+  width: 26%;
+  height: 26%;
+  padding: 0.6rem;
+  animation: landing-float 6s ease-in-out -2.4s infinite;
+}
+
+.landing-note {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgb(209 250 229);
+  border-radius: 9999px;
+  padding: 0.65rem 0.95rem;
+  background: rgb(255 255 255 / 90%);
+  color: #166534;
+  font-size: 0.74rem;
+  font-weight: 800;
+  box-shadow: 0 10px 25px rgb(6 95 70 / 12%);
+  backdrop-filter: blur(12px);
+}
+
+.dark .landing-note {
+  border-color: rgb(6 78 59 / 60%);
+  background: rgb(15 23 42 / 90%);
+  color: #86efac;
+  box-shadow: 0 10px 25px rgb(0 0 0 / 30%);
+}
+
+.landing-note-top {
+  top: 25%;
+  left: 2%;
+  animation: landing-float 4.2s ease-in-out -1.2s infinite;
+}
+
+.landing-note-bottom {
+  right: 14%;
+  bottom: 1%;
+  animation: landing-float 4.9s ease-in-out -2.2s infinite;
+}
+
+.landing-star {
+  position: absolute;
+  z-index: 4;
+  color: #fbbf24;
+  font-size: 1.4rem;
+  animation: landing-twinkle 2.8s ease-in-out infinite;
+}
+
+.landing-star-one { top: 15%; left: 35%; }
+.landing-star-two { top: 8%; right: 42%; animation-delay: -1.1s; }
+.landing-star-three { right: 36%; bottom: 22%; color: #fb7185; animation-delay: -2s; }
+
+.landing-scroll-cue i {
+  display: block;
+  height: 27px;
+  width: 17px;
+  border: 1.5px solid currentColor;
+  border-radius: 9999px;
+}
+
+.landing-scroll-cue i::after {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 6px;
+  margin: 5px auto;
+  border-radius: 99px;
+  background: currentColor;
+  animation: landing-scroll-dot 1.7s ease-in-out infinite;
+}
+
+@keyframes landing-scene-in {
+  from { opacity: 0; transform: translateY(28px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes landing-float {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-12px) rotate(1deg); }
+}
+
+@keyframes landing-twinkle {
+  0%, 100% { opacity: 0.35; transform: scale(0.8) rotate(0); }
+  50% { opacity: 1; transform: scale(1.3) rotate(15deg); }
+}
+
+@keyframes landing-scroll-dot {
+  0% { transform: translateY(0); opacity: 0; }
+  35% { opacity: 1; }
+  80%, 100% { transform: translateY(9px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+  .alive-orb,
+  .scroll-companion,
+  .scroll-companion-inner,
+  .scroll-companion-img,
+  .landing-scene,
+  .landing-pet,
+  .landing-note,
+  .landing-star {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .scroll-companion-bubble {
+    font-size: 0.62rem;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .landing-pet-main { inset: 19% 16% 5% 4%; }
+  .landing-note { font-size: 0.64rem; }
+  .landing-note-top { left: 0; }
+  .landing-note-bottom { right: 2%; }
+}
+

@@ -1,6 +1,6 @@
 """add wellness_checkins table
 
-Revision ID: 595353480c37
+Revision ID: 6678bff1baf3
 Revises: 429fc9474422
 Create Date: <fill in>
 

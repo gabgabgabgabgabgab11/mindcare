@@ -2,11 +2,13 @@
 
 Write-Host "Starting MindTrack Campus Services..." -ForegroundColor Cyan
 
+$baseDir = $PSScriptRoot
+
 # 1. Start Backend
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'c:\Users\EMMANUEL\OneDrive\Capstone-Project\mindtrack-campus\backend'; Write-Host 'Starting Backend (FastAPI)...' -ForegroundColor Green; .\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$baseDir\backend'; Write-Host 'Starting Backend (FastAPI)...' -ForegroundColor Green; .\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
 
 # 2. Start Frontend
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'c:\Users\EMMANUEL\OneDrive\Capstone-Project\mindtrack-campus\frontend\frontend'; Write-Host 'Building and starting Frontend (Preview with Proxy)...' -ForegroundColor Blue; npm run build; npm run preview"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$baseDir\frontend\frontend'; Write-Host 'Starting Frontend (Dev Server)...' -ForegroundColor Blue; npm run dev"
 
 # 3. Wait 3 seconds then start Cloudflare Tunnel
 Start-Sleep -Seconds 3

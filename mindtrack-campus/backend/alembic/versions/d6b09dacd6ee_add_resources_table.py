@@ -1,7 +1,7 @@
 """add resources table
 
 Revision ID: d6b09dacd6ee
-Revises: 595353480c37u
+Revises: 6678bff1baf3
 Create Date: 2026-09-05 05:59:22.724575
 
 """

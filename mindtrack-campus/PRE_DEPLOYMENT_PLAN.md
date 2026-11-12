@@ -28,7 +28,7 @@
 - [ ] All outstanding Git changes committed and pushed to `main`
 - [ ] `.env` files are in `.gitignore` — run `git status` and confirm no `.env` is tracked
 - [ ] `.env.example` contains only placeholder values (confirmed)
-- [ ] Alembic migration head is `e4a1d9c7b2f0` — verify with `alembic heads`
+- [x] Alembic migration head is `e4a1d9c7b2f0` — verify with `alembic heads`
 
 ### 0.2 Secret Rotation (Critical)
 
