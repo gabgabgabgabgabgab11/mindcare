@@ -7,6 +7,7 @@ class MeResponse(BaseModel):
     id: str
     email: Optional[str]
     role: str
+    display_name: Optional[str] = None
     year_level: Optional[str]
     program: Optional[str]
     section: Optional[str]

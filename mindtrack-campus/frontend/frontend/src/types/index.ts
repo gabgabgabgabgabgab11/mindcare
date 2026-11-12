@@ -10,6 +10,7 @@ export interface MeResponse {
   id: string;
   email: string | null;
   role: Role;
+  display_name: string | null;
   year_level: string | null;
   program: string | null;
   section: string | null;
@@ -18,6 +19,7 @@ export interface MeResponse {
 }
 
 export interface ProfileUpdateRequest {
+  display_name?: string;
   program?: string;
   year_level?: number;
   section?: string;

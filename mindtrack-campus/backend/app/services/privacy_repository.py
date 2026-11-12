@@ -8,7 +8,7 @@ from app.models.privacy import PrivacySettings
 def get_or_create_privacy_settings(db: Session, user_id: uuid.UUID) -> PrivacySettings:
     settings = db.get(PrivacySettings, user_id)
     if settings is None:
-        settings = PrivacySettings(user_id=user_id)  # defaults: tracking on, anonymize off
+        settings = PrivacySettings(user_id=user_id)  # defaults: tracking on, anonymize on
         db.add(settings)
         db.commit()
         db.refresh(settings)
@@ -32,4 +32,4 @@ def get_deidentified_flag(db: Session, user_id: uuid.UUID) -> bool:
     this (or a bulk equivalent) and exclude/de-identify accordingly —
     this must never be left to the frontend to respect."""
     settings = db.get(PrivacySettings, user_id)
-    return settings.anonymize_activity if settings else False
+    return settings.anonymize_activity if settings else True

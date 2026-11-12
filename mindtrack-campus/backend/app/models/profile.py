@@ -34,6 +34,7 @@ class Profile(Base):
 
     id = Column(PG_UUID(as_uuid=True), ForeignKey("auth.users.id"), primary_key=True)
     role = Column(String, nullable=False, server_default="student")
+    display_name = Column(String(50), nullable=True)
     year_level = Column(String, nullable=True)
     program = Column(String, nullable=True)
     section = Column(String, nullable=True)

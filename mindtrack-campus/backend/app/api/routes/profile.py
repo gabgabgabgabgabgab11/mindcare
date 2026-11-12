@@ -45,6 +45,7 @@ def get_section_options(
 
 
 class ProfileUpdateRequest(BaseModel):
+    display_name: Optional[str] = Field(None, max_length=50)
     program: Optional[str] = None
     year_level: Optional[int] = Field(None, ge=1, le=4)
     section: Optional[str] = None
@@ -65,6 +66,11 @@ def update_profile(
         and payload.section is None
     )
     has_academic = payload.program is not None or payload.year_level is not None or payload.section is not None
+    if payload.display_name is not None:
+        display_name = payload.display_name.strip()
+        if not display_name:
+            raise HTTPException(status_code=422, detail="Display name cannot be empty.")
+        profile.display_name = display_name
     if has_program_only:
         if payload.program not in PROGRAM_OPTIONS:
             raise HTTPException(
@@ -121,6 +127,7 @@ def update_profile(
         id=str(profile.id),
         email=None,
         role=profile.role,
+        display_name=profile.display_name,
         year_level=profile.year_level,
         program=profile.program,
         section=profile.section,

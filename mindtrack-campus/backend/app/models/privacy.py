@@ -16,7 +16,7 @@ class PrivacySettings(Base):
 
     user_id = Column(PG_UUID(as_uuid=True), ForeignKey("profiles.id"), primary_key=True)
     allow_activity_tracking = Column(Boolean, nullable=False, default=True)
-    anonymize_activity = Column(Boolean, nullable=False, default=False)
+    anonymize_activity = Column(Boolean, nullable=False, default=True, server_default="true")
     updated_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

@@ -28,6 +28,7 @@ def read_current_user(
         id=str(profile.id),
         email=supabase_user.email,
         role=profile.role,
+        display_name=profile.display_name,
         year_level=profile.year_level,
         program=profile.program,
         section=profile.section,

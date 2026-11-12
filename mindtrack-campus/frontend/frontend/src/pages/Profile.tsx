@@ -15,6 +15,9 @@ export const Profile = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [profile, setProfile] = useState<MeResponse | null>(null);
+  const [displayNameInput, setDisplayNameInput] = useState('');
+  const [displayNameMessage, setDisplayNameMessage] = useState<string | null>(null);
+  const [isUpdatingDisplayName, setIsUpdatingDisplayName] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [isUpdatingProgram, setIsUpdatingProgram] = useState(false);
   const [selectedPet, setSelectedPet] = useState<string | null>(null);
@@ -31,6 +34,7 @@ export const Profile = () => {
     Promise.all([getCurrentUser(), listJournalEntries(), listWellnessCheckIns(), getConsentStatus()])
       .then(([user, journals, checkins, consent]) => {
         setProfile(user);
+        setDisplayNameInput(user.display_name ?? '');
         setSelectedProgram(user.program);
         setSelectedPet(user.companion_pet);
         setNicknameInput(user.companion_nickname ?? '');
@@ -112,13 +116,37 @@ export const Profile = () => {
     }
   };
 
+  const handleSaveDisplayName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const displayName = displayNameInput.trim();
+    if (!displayName || isUpdatingDisplayName) return;
+
+    setIsUpdatingDisplayName(true);
+    setDisplayNameMessage(null);
+    setError(null);
+    try {
+      const updated = await updateProfile({ display_name: displayName });
+      setProfile((previous) => previous ? { ...previous, display_name: updated.display_name } : previous);
+      setDisplayNameInput(updated.display_name ?? '');
+      if (studentCache.dashboard) {
+        studentCache.dashboard.user = { ...studentCache.dashboard.user, display_name: updated.display_name };
+      }
+      setDisplayNameMessage('Name saved.');
+      window.setTimeout(() => setDisplayNameMessage(null), 3000);
+    } catch {
+      setError('Could not save your name. Please try again.');
+    } finally {
+      setIsUpdatingDisplayName(false);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
   const email = profile?.email ?? 'Loading profile...';
-  const displayName = profile?.email?.split('@')[0].replace(/[._-]+/g, ' ') || 'Student';
+  const displayName = profile?.display_name || profile?.email?.split('@')[0].replace(/[._-]+/g, ' ') || 'Student';
   const initials = displayName
     .split(' ')
     .filter(Boolean)
@@ -177,6 +205,31 @@ export const Profile = () => {
           </div>
         </div>
       </div>
+
+      <Card className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <form onSubmit={(event) => void handleSaveDisplayName(event)}>
+          <label htmlFor="student-display-name" className="block text-sm font-bold text-gray-900 dark:text-white">Display name</label>
+          <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">Choose the name shown on your profile instead of your email nickname.</p>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+            <input
+              id="student-display-name"
+              type="text"
+              required
+              minLength={1}
+              maxLength={50}
+              value={displayNameInput}
+              onChange={(event) => setDisplayNameInput(event.target.value)}
+              disabled={!profile || isUpdatingDisplayName}
+              placeholder={displayName}
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+            <Button type="submit" disabled={!profile || !displayNameInput.trim() || isUpdatingDisplayName} isLoading={isUpdatingDisplayName} className="shrink-0">
+              Save name
+            </Button>
+          </div>
+          {displayNameMessage && <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">{displayNameMessage}</p>}
+        </form>
+      </Card>
 
       {/* 2. Companion Selector Section */}
       <Card id="companion" data-tour="profile-companion" className="border-gray-100 dark:border-slate-800 shadow-sm rounded-3xl bg-white dark:bg-slate-900 p-6">
