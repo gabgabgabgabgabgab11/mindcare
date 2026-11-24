@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, requireNoActiveConsent = false }) => {
-  const { isAuthenticated, isLoading, role, hasActiveConsent } = useAuth();
+  const { isAuthenticated, isLoading, role, hasActiveConsent, isMfaVerified } = useAuth();
 
   if (isLoading) {
     return null;
@@ -18,6 +18,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, re
     // Redirect unauthenticated users to the login page
     return <Navigate to="/login" replace />;
   }
+
+  if (!isMfaVerified) return <Navigate to="/login" replace />;
 
   if (role && !allowedRoles.includes(role)) {
     // Redirect unauthorized users (e.g., student trying to access admin page)

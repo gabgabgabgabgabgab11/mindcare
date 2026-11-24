@@ -16,6 +16,8 @@ export interface MeResponse {
   section: string | null;
   companion_pet: CompanionPet | null;
   companion_nickname: string | null;
+  avatar_image: string | null;
+  cover_image: string | null;
 }
 
 export interface ProfileUpdateRequest {
@@ -25,6 +27,8 @@ export interface ProfileUpdateRequest {
   section?: string;
   companion_pet?: string | null;
   companion_nickname?: string | null;
+  avatar_image?: string;
+  cover_image?: string;
 }
 
 // wellness_checkin.py

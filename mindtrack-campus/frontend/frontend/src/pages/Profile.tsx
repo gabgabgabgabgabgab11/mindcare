@@ -4,10 +4,10 @@ import { ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/useAuth';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { getConsentStatus, getCurrentUser, listJournalEntries, listWellnessCheckIns, updateProfile } from '../services/studentApi';
+import { getCurrentUser, listJournalEntries, listWellnessCheckIns, updateProfile } from '../services/studentApi';
 import { studentCache } from '../services/studentCache';
 import { PET_LIST, type PetId } from '../constants/pets';
-import type { ConsentStatus, MeResponse } from '../types';
+import type { MeResponse } from '../types';
 
 const PROGRAM_OPTIONS = ['BSIT', 'BSCpE', 'BSHM', 'BSA', 'BSENTREP', 'BSEDEN', 'DSEDMT', 'DOMTLOM'];
 
@@ -28,11 +28,10 @@ export const Profile = () => {
   const [journalCount, setJournalCount] = useState(0);
   const [checkinCount, setCheckinCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [consentStatus, setConsentStatus] = useState<ConsentStatus | null>(null);
 
   useEffect(() => {
-    Promise.all([getCurrentUser(), listJournalEntries(), listWellnessCheckIns(), getConsentStatus()])
-      .then(([user, journals, checkins, consent]) => {
+    Promise.all([getCurrentUser(), listJournalEntries(), listWellnessCheckIns()])
+      .then(([user, journals, checkins]) => {
         setProfile(user);
         setDisplayNameInput(user.display_name ?? '');
         setSelectedProgram(user.program);
@@ -40,7 +39,6 @@ export const Profile = () => {
         setNicknameInput(user.companion_nickname ?? '');
         setJournalCount(journals.length);
         setCheckinCount(checkins.length);
-        setConsentStatus(consent);
       })
       .catch(() => setError('Profile data could not be loaded.'));
   }, []);
@@ -140,6 +138,34 @@ export const Profile = () => {
     }
   };
 
+  const handleImageUpload = async (kind: 'avatar_image' | 'cover_image', event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Choose a JPG, PNG, or WebP image.');
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      setError('Images must be 1 MB or smaller.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      if (typeof reader.result !== 'string') return;
+      try {
+        const updated = await updateProfile({ [kind]: reader.result });
+        setProfile((previous) => previous ? { ...previous, [kind]: updated[kind] } : updated);
+        if (studentCache.dashboard) studentCache.dashboard.user = { ...studentCache.dashboard.user, [kind]: updated[kind] };
+        setError(null);
+      } catch {
+        setError('Image could not be saved. Please try again.');
+      }
+    };
+    reader.onerror = () => setError('Image could not be read. Please choose another file.');
+    reader.readAsDataURL(file);
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -161,14 +187,14 @@ export const Profile = () => {
       {/* 1. Profile Banner & Avatar */}
       <div data-tour="profile-header" className="relative rounded-3xl bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden mt-2">
         {/* Soft banner background */}
-        <div className="h-32 bg-emerald-50 dark:bg-slate-800"></div>
+        <div className="h-32 bg-emerald-50 dark:bg-slate-800 bg-cover bg-center" style={profile?.cover_image ? { backgroundImage: `url(${profile.cover_image})` } : undefined}></div>
         
         {/* Avatar (Overlapping) */}
         <div className="absolute top-16 left-6">
           <div className="w-24 h-24 bg-white rounded-full p-1.5 shadow-md">
-            <div className="w-full h-full bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 rounded-full flex items-center justify-center text-3xl font-black">
-              {initials}
-            </div>
+            {profile?.avatar_image ? <img src={profile.avatar_image} alt={`${displayName} profile`} className="h-full w-full rounded-full object-cover" /> : (
+              <div className="w-full h-full bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 rounded-full flex items-center justify-center text-3xl font-black">{initials}</div>
+            )}
           </div>
         </div>
 
@@ -176,6 +202,15 @@ export const Profile = () => {
         <div className="pt-12 pb-6 px-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white capitalize">{displayName}</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 font-medium mb-3">{email}</p>
+          <div className="mb-4 flex flex-wrap gap-3 text-xs font-semibold text-brand-700 dark:text-brand-300">
+            <label className="cursor-pointer rounded-lg border border-brand-200 px-3 py-2 hover:bg-brand-50 dark:border-brand-900 dark:hover:bg-brand-950/50">
+              Edit profile picture<input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(event) => void handleImageUpload('avatar_image', event)} />
+            </label>
+            <label className="cursor-pointer rounded-lg border border-brand-200 px-3 py-2 hover:bg-brand-50 dark:border-brand-900 dark:hover:bg-brand-950/50">
+              Edit cover photo<input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(event) => void handleImageUpload('cover_image', event)} />
+            </label>
+            <span className="self-center font-normal text-gray-500 dark:text-slate-400">JPG, PNG, or WebP · up to 1 MB</span>
+          </div>
           
           <div className="flex flex-wrap gap-2 mt-2">
             <div className="relative inline-flex">
@@ -312,29 +347,8 @@ export const Profile = () => {
         </form>
       </Card>
 
-      {/* 3. Consent Status */}
-      <Card data-tour="profile-consent" className="border-gray-100 dark:border-slate-800 shadow-sm rounded-3xl bg-white dark:bg-slate-900 p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="font-bold text-gray-900 dark:text-white">Wellness consent</h2>
-            <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-slate-400">
-              Consent is required for protected wellness features and is checked by the backend.
-            </p>
-          </div>
-          <span className={`rounded-full px-3 py-1 text-xs font-bold ${consentStatus?.has_active_consent ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300' : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300'}`}>
-            {consentStatus?.has_active_consent ? 'Active' : 'Action needed'}
-          </span>
-        </div>
-        {consentStatus && (
-          <p className="mt-3 text-xs text-gray-500 dark:text-slate-400">
-            Current version: {consentStatus.current_version}
-            {consentStatus.consented_version ? ` • Signed version: ${consentStatus.consented_version}` : ''}
-          </p>
-        )}
-      </Card>
-
       {/* 4. Wellness Stats Grid */}
-      <div data-tour="profile-stats" className="grid grid-cols-3 gap-3">
+      <div data-tour="profile-stats" className="grid grid-cols-2 gap-3">
         <Card className="flex flex-col items-center justify-center p-4 shadow-sm border border-gray-100 dark:border-slate-800 rounded-3xl bg-white dark:bg-slate-900 text-center">
           <span className="text-2xl mb-1">🔥</span>
           <span className="text-xl font-black text-gray-900 dark:text-white">{checkinCount}</span>
@@ -344,11 +358,6 @@ export const Profile = () => {
           <span className="text-2xl mb-1">📔</span>
           <span className="text-xl font-black text-gray-900 dark:text-white">{journalCount}</span>
           <span className="text-[10px] font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider">Entries</span>
-        </Card>
-        <Card className="flex flex-col items-center justify-center p-4 shadow-sm border border-gray-100 dark:border-slate-800 rounded-3xl bg-white dark:bg-slate-900 text-center">
-          <span className="text-2xl mb-1">🛡️</span>
-          <span className="text-sm font-black text-gray-900 dark:text-white mt-1">{consentStatus?.has_active_consent ? 'Active' : 'Pending'}</span>
-          <span className="text-[10px] font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider mt-0.5">Consent</span>
         </Card>
       </div>
 

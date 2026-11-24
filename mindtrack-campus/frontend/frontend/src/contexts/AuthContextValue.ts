@@ -8,7 +8,10 @@ export interface AuthState {
   role: Role | null;
   hasActiveConsent: boolean | null;
   session: Session | null;
+  isMfaVerified: boolean;
   login: (email: string, password: string) => Promise<void>;
+  beginMfa: () => Promise<{ factorId: string; qrCode?: string; secret?: string; isEnrollment: boolean }>;
+  verifyMfa: (factorId: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
