@@ -113,7 +113,6 @@ export const Layout = () => {
               <Leaf className="w-5 h-5 text-brand-600 dark:text-brand-400" />
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">MindCare Console</span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400">PUP Santa Maria Campus</span>
               </div>
             </div>
             <button
@@ -402,9 +401,6 @@ export const Layout = () => {
           <Button variant="secondary" onClick={handleLogout} className="w-full text-xs py-2 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200">
             Log Out
           </Button>
-          <div className="text-[10px] text-gray-400 dark:text-slate-500 font-bold text-center uppercase tracking-widest mt-0.5">
-            PUP Santa Maria Campus
-          </div>
         </div>
       </aside>
 

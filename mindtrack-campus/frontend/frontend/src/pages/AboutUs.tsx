@@ -177,7 +177,6 @@ export const AboutUs = () => {
               <BrandMark />
               <span className="min-w-0">
                 <span className="block truncate text-base font-black leading-tight tracking-tight text-slate-900 dark:text-white sm:text-lg">MindCare</span>
-                <span className="hidden text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300 sm:block">PUP Santa Maria</span>
               </span>
             </Link>
           </div>

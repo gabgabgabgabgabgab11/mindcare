@@ -366,7 +366,7 @@ function LegalDocumentModal({ document, onClose }: { document: LegalDocument; on
       >
         <header className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 dark:border-slate-800 sm:px-6 sm:py-5">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">MindCare · PUP Santa Maria</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">MindCare</p>
             <h2 id="privacy-legal-modal-title" className="mt-1 text-lg font-extrabold text-slate-900 dark:text-white sm:text-xl">{content.title}</h2>
           </div>
           <button
