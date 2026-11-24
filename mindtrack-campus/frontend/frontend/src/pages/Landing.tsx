@@ -41,10 +41,7 @@ export const Landing = () => {
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-700/20">
               <Heart className="h-5 w-5 fill-current" />
             </span>
-            <span>
-              <strong className="block text-lg leading-5 tracking-tight text-slate-900 dark:text-white">MindCare</strong>
-              <small className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">PUP Santa Maria</small>
-            </span>
+            <span className="text-lg font-black leading-5 tracking-tight text-slate-900 dark:text-white">MindCare</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
             <Link to="/about" className="hidden text-sm font-bold text-slate-600 transition hover:text-emerald-700 sm:block dark:text-slate-300 dark:hover:text-emerald-300">
@@ -241,7 +238,7 @@ export const Landing = () => {
       {/* Footer */}
       <footer className="bg-slate-950 px-5 py-8 text-center text-sm text-slate-400">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row">
-          <span>© 2026 MindCare · PUP Santa Maria</span>
+          <span>© 2026 MindCare</span>
           <span className="inline-flex items-center gap-1.5">
             <ShieldCheck className="h-4 w-4 text-emerald-400" />
             Built around care, privacy, and respect.
