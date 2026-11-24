@@ -51,6 +51,8 @@ class ProfileUpdateRequest(BaseModel):
     section: Optional[str] = None
     companion_pet: Optional[str] = None
     companion_nickname: Optional[str] = Field(None, max_length=20)
+    avatar_image: Optional[str] = Field(None, max_length=1_400_000)
+    cover_image: Optional[str] = Field(None, max_length=1_400_000)
 
 
 @router.put("", response_model=MeResponse)
@@ -111,6 +113,11 @@ def update_profile(
         nickname = payload.companion_nickname.strip()
         profile.companion_nickname = nickname or None
 
+    if payload.avatar_image is not None:
+        profile.avatar_image = payload.avatar_image
+    if payload.cover_image is not None:
+        profile.cover_image = payload.cover_image
+
     db.commit()
     db.refresh(profile)
 
@@ -133,4 +140,6 @@ def update_profile(
         section=profile.section,
         companion_pet=profile.companion_pet,
         companion_nickname=profile.companion_nickname,
+        avatar_image=profile.avatar_image,
+        cover_image=profile.cover_image,
     )

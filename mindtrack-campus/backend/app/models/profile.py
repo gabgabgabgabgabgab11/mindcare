@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, String, Table
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, String, Table, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 from app.db.session import Base
@@ -42,6 +42,8 @@ class Profile(Base):
     # Unlike a browser-local preference, this follows the authenticated
     # student across devices and is isolated from other users of a device.
     companion_nickname = Column(String(20), nullable=True)
+    avatar_image = Column(Text, nullable=True)
+    cover_image = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(
         DateTime(timezone=True),

@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
 import { Button } from '../components/Button';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { clearFailedLogins, getLoginCooldownMs, recordFailedLogin } from '../utils/loginAttemptLimiter';
 import { ForgotPasswordModal } from '../components/ForgotPasswordModal';
+import { Eye, EyeOff } from 'lucide-react';
+import { consumeInactivityNotice } from '../utils/sessionInactivity';
 
 export const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated, isLoading, role } = useAuth();
+  const { login, beginMfa, verifyMfa, isAuthenticated, isMfaVerified, isLoading, role } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,17 +19,42 @@ export const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cooldownMs, setCooldownMs] = useState(() => getLoginCooldownMs());
   const [isForgotOpen, setIsForgotOpen] = useState(false);
-  const registrationMessage = (location.state as { message?: string } | null)?.message;
+  const [showPassword, setShowPassword] = useState(false);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaQrCode, setMfaQrCode] = useState<string | null>(null);
+  const [mfaSecret, setMfaSecret] = useState<string | null>(null);
+  const [isMfaBusy, setIsMfaBusy] = useState(false);
+  const [isMfaEnrollment, setIsMfaEnrollment] = useState(false);
+  const [mfaInitAttempt, setMfaInitAttempt] = useState(0);
+  const mfaInitStarted = useRef(false);
+  const [inactivityMessage] = useState(consumeInactivityNotice);
+  const registrationMessage = (location.state as { message?: string } | null)?.message ?? inactivityMessage;
 
   // The ONLY place that decides where someone lands - driven entirely by
   // the real role the backend returns for this account, never by
   // anything picked on this screen. Students are routed to /welcome
   // where returning students do mood/screening and new students do full onboarding.
   useEffect(() => {
-    if (!isLoading && isAuthenticated && role) {
+    if (!isLoading && isAuthenticated && isMfaVerified && role) {
       navigate(role === 'admin' ? '/admin' : '/welcome');
     }
-  }, [isAuthenticated, isLoading, navigate, role]);
+  }, [isAuthenticated, isMfaVerified, isLoading, navigate, role]);
+
+  useEffect(() => {
+    if (!isAuthenticated || isMfaVerified || mfaFactorId || mfaInitStarted.current) return;
+    mfaInitStarted.current = true;
+    setIsMfaBusy(true);
+    beginMfa().then((setup) => {
+      setMfaFactorId(setup.factorId);
+      setIsMfaEnrollment(setup.isEnrollment);
+      setMfaQrCode(setup.qrCode ?? null);
+      setMfaSecret(setup.secret ?? null);
+    }).catch(() => {
+      mfaInitStarted.current = false;
+      setError('Two-factor setup could not start. Check that TOTP authentication is enabled in Supabase, then try again.');
+    }).finally(() => setIsMfaBusy(false));
+  }, [beginMfa, isAuthenticated, isMfaVerified, mfaFactorId, mfaInitAttempt]);
 
   useEffect(() => {
     if (!cooldownMs) return;
@@ -88,7 +115,7 @@ export const Login = () => {
           </div>
 
           {error && (
-            <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-sm font-medium rounded-xl px-4 py-3 mb-4">
+            <div role="alert" className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-sm font-medium rounded-xl px-4 py-3 mb-4">
               {error}
             </div>
           )}
@@ -98,7 +125,7 @@ export const Login = () => {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          {!isAuthenticated && <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider pl-1">
                 Email
@@ -128,13 +155,16 @@ export const Login = () => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7z"></path></svg>
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 dark:focus:border-brand-400 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                  className="w-full pl-11 pr-12 py-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 dark:focus:border-brand-400 focus:bg-white dark:focus:bg-slate-800 transition-all"
                   placeholder="••••••••"
                 />
+                <button type="button" onClick={() => setShowPassword((visible) => !visible)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-300" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
@@ -142,7 +172,30 @@ export const Login = () => {
             <Button type="submit" variant="primary" disabled={cooldownMs > 0} className="w-full bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl py-3.5 mt-2 shadow-lg shadow-brand-600/25 border-none text-sm font-semibold transition-all cursor-pointer" isLoading={isSubmitting}>
               Sign In to Portal
             </Button>
-          </form>
+          </form>}
+          {isAuthenticated && !isMfaVerified && (
+            <form onSubmit={async (event) => {
+              event.preventDefault();
+              if (!mfaFactorId || isMfaBusy) return;
+              setIsMfaBusy(true);
+              setError(null);
+              try {
+                await verifyMfa(mfaFactorId, mfaCode.replace(/\s/g, ''));
+              } catch {
+                setError('That verification code was not accepted. Check your authenticator app and try again.');
+              } finally { setIsMfaBusy(false); }
+            }} className="mt-5 flex flex-col gap-3" aria-live="polite">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{isMfaEnrollment ? 'Set up two-factor authentication' : 'Verify your sign-in'}</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{isMfaEnrollment ? 'Scan this QR code with an authenticator app, then enter the six-digit code it displays.' : 'Enter the six-digit code from your authenticator app to finish signing in.'}</p>
+              {isMfaBusy && !mfaFactorId && <p className="text-sm text-slate-500">Preparing secure verification…</p>}
+              {!isMfaBusy && !mfaFactorId && <button type="button" onClick={() => setMfaInitAttempt((attempt) => attempt + 1)} className="text-sm font-semibold text-brand-600 hover:underline">Try setting up verification again</button>}
+              {mfaQrCode && <img src={mfaQrCode.startsWith('data:') ? mfaQrCode : `data:image/svg+xml;utf8,${encodeURIComponent(mfaQrCode)}`} alt="Authenticator setup QR code" className="mx-auto h-44 w-44 rounded-xl border border-slate-200 bg-white p-2" />}
+              {mfaSecret && <p className="text-xs text-slate-500 dark:text-slate-400">Manual setup key: <code className="select-all font-mono">{mfaSecret}</code></p>}
+              <label className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300" htmlFor="mfa-code">Authenticator code</label>
+              <input id="mfa-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9 ]{6,8}" maxLength={8} required value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} placeholder="123456" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+              <Button type="submit" disabled={!mfaFactorId} isLoading={isMfaBusy} className="w-full">{isMfaEnrollment ? 'Verify and finish setup' : 'Verify and sign in'}</Button>
+            </form>
+          )}
           <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
             New to MindCare?{' '}
             <Link to="/create-account" className="font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline">

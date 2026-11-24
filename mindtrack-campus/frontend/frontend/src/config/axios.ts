@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { supabase } from './supabaseClient';
+import { isSessionInactive, markInactivitySignOut } from '../utils/sessionInactivity';
 
 const isLocalHost =
   typeof window !== 'undefined' &&
@@ -16,6 +17,11 @@ export const api = axios.create({
 // Attach the real Supabase access token to every outgoing request.
 api.interceptors.request.use(async (config) => {
   const { data } = await supabase.auth.getSession();
+  if (data.session && isSessionInactive(data.session)) {
+    markInactivitySignOut();
+    await supabase.auth.signOut({ scope: 'local' });
+    throw new axios.CanceledError('Session expired after seven days of inactivity');
+  }
   const token = data.session?.access_token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

@@ -13,6 +13,8 @@ class MeResponse(BaseModel):
     section: Optional[str]
     companion_pet: Optional[str] = None
     companion_nickname: Optional[str] = None
+    avatar_image: Optional[str] = None
+    cover_image: Optional[str] = None
 
     class Config:
         from_attributes = True

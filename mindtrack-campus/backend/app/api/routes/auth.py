@@ -34,6 +34,8 @@ def read_current_user(
         section=profile.section,
         companion_pet=profile.companion_pet,
         companion_nickname=profile.companion_nickname,
+        avatar_image=profile.avatar_image,
+        cover_image=profile.cover_image,
     )
 
 
