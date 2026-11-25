@@ -5,7 +5,7 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { MantraWallPostCard } from '../components/MantraWallPost';
 import { CompanionHeader } from '../components/CompanionHeader';
-import { createMantraWallPost, listMantraWallPosts, reportMantraWallPost } from '../services/studentApi';
+import { createMantraWallPost, listMantraWallPosts, reportMantraWallPost, setMantraWallHeart } from '../services/studentApi';
 import type { MantraPostType, MantraWallPost } from '../types';
 
 const MAX_CHARS = 300;
@@ -90,6 +90,11 @@ export const MantraWall = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleHeart = async (id: string, hearted: boolean) => {
+    const updated = await setMantraWallHeart(id, hearted);
+    setPosts(current => current.map(post => post.id === id ? { ...post, ...updated } : post));
   };
 
   const handleReport = async (id: string) => {
@@ -248,6 +253,7 @@ export const MantraWall = () => {
               <MantraWallPostCard
                 post={post}
                 onReport={handleReport}
+                onHeart={handleHeart}
                 isReporting={reportingPostId === post.id}
                 isReported={reportedPostIds.has(post.id)}
               />

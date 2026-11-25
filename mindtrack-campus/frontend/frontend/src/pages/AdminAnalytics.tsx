@@ -27,6 +27,7 @@ import {
 } from 'recharts';
 import { Card } from '../components/Card';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { YEAR_LEVEL_OPTIONS, yearLevelLabel } from '../constants/academicYears';
 import {
   getWellnessByGroup,
   getWellnessFilterOptions,
@@ -56,7 +57,7 @@ const DEFAULT_FILTERS: WellnessAnalyticsFilters = {
   end_date: '',
 };
 
-const YEAR_LEVELS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'];
+const YEAR_LEVELS = YEAR_LEVEL_OPTIONS.map(option => option.value);
 const SEMESTERS = [
   { value: 'all', label: 'All Semesters' },
   { value: '1st', label: '1st Semester' },
@@ -532,7 +533,7 @@ export const AdminAnalytics = () => {
               className="px-2 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               <option value="">All Years</option>
-              {YEAR_LEVELS.map((y) => <option key={y} value={y}>{y}</option>)}
+              {[...new Set([...YEAR_LEVELS, ...filterOptions.year_levels])].map((y) => <option key={y} value={y}>{yearLevelLabel(y)}</option>)}
             </select>
           </div>
 

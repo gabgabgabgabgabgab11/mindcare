@@ -3,10 +3,10 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
-from app.models.mantra_wall import MantraWallPost, MantraWallReport
+from app.models.mantra_wall import MantraWallPost, MantraWallReport, MantraWallHeart
 from app.services.content_filter import determine_moderation_status
 
 
@@ -43,6 +43,38 @@ def list_visible_posts(db: Session, requesting_user_id: uuid.UUID) -> list[Mantr
         .order_by(MantraWallPost.created_at.desc())
     )
     return list(db.execute(stmt).scalars().all())
+
+
+def get_heart_summaries(db: Session, post_ids: list[uuid.UUID], user_id: uuid.UUID) -> dict:
+    if not post_ids:
+        return {}
+    rows = db.execute(
+        select(
+            MantraWallHeart.post_id,
+            func.count().label("heart_count"),
+            func.max(case((MantraWallHeart.user_id == user_id, 1), else_=0)).label("has_sent_heart"),
+        ).where(MantraWallHeart.post_id.in_(post_ids)).group_by(MantraWallHeart.post_id)
+    ).all()
+    return {row.post_id: {"heart_count": row.heart_count, "has_sent_heart": bool(row.has_sent_heart)} for row in rows}
+
+
+def set_post_heart(db: Session, post_id: uuid.UUID, user_id: uuid.UUID, hearted: bool) -> dict:
+    # Serialize updates to a post in PostgreSQL. The composite primary key is
+    # also a database-level guarantee against duplicate hearts per account.
+    post = db.execute(select(MantraWallPost).where(
+        MantraWallPost.id == post_id, MantraWallPost.moderation_status == "approved",
+    ).with_for_update()).scalar_one_or_none()
+    if post is None:
+        raise HTTPException(status_code=404, detail="Post not available")
+    heart = db.get(MantraWallHeart, (post_id, user_id))
+    if hearted and heart is None:
+        db.add(MantraWallHeart(post_id=post_id, user_id=user_id))
+    elif not hearted and heart is not None:
+        db.delete(heart)
+    db.flush()
+    result = get_heart_summaries(db, [post_id], user_id).get(post_id, {"heart_count": 0, "has_sent_heart": False})
+    db.commit()
+    return result
 
 
 def list_posts_for_admin(db: Session, status_filter: Optional[str] = None) -> list[MantraWallPost]:

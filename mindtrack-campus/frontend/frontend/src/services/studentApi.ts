@@ -127,3 +127,10 @@ export const createMantraWallPost = async (payload: {
 export const reportMantraWallPost = async (postId: string) => {
   await api.post(`/api/v1/mantra-wall/posts/${postId}/report`, {});
 };
+
+export const setMantraWallHeart = async (postId: string, hearted: boolean) => {
+  const { data } = await api.put<Pick<MantraWallPost, 'heart_count' | 'has_sent_heart'>>(
+    `/api/v1/mantra-wall/posts/${postId}/heart`, { hearted },
+  );
+  return data;
+};

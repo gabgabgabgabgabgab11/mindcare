@@ -58,6 +58,8 @@ class _FakeMantraWallSession:
                 return self._items
 
         compiled = str(stmt)
+        if "mantra_wall_hearts" in compiled:
+            return _Result([])
         if "mantra_wall_reports" in compiled and "JOIN" in compiled.upper():
             rows = []
             for report in self._reports.values():

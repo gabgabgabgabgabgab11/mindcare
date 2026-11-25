@@ -7,6 +7,7 @@ import { Button } from '../components/Button';
 import { getCurrentUser, listJournalEntries, listWellnessCheckIns, updateProfile } from '../services/studentApi';
 import { studentCache } from '../services/studentCache';
 import { PET_LIST, type PetId } from '../constants/pets';
+import { YEAR_LEVEL_OPTIONS, yearLevelLabel } from '../constants/academicYears';
 import type { MeResponse } from '../types';
 
 const PROGRAM_OPTIONS = ['BSIT', 'BSCpE', 'BSHM', 'BSA', 'BSENTREP', 'BSEDEN', 'DSEDMT', 'DOMTLOM'];
@@ -20,6 +21,8 @@ export const Profile = () => {
   const [isUpdatingDisplayName, setIsUpdatingDisplayName] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [isUpdatingProgram, setIsUpdatingProgram] = useState(false);
+  const [isUpdatingYear, setIsUpdatingYear] = useState(false);
+  const [academicMessage, setAcademicMessage] = useState<string | null>(null);
   const [selectedPet, setSelectedPet] = useState<string | null>(null);
   const [isUpdatingPet, setIsUpdatingPet] = useState(false);
   const [petSuccessMessage, setPetSuccessMessage] = useState<string | null>(null);
@@ -45,15 +48,17 @@ export const Profile = () => {
 
   const handleProgramChange = async (event: ChangeEvent<HTMLSelectElement>) => {
     const program = event.target.value;
-    if (!program || program === selectedProgram || isUpdatingProgram) return;
+    if (!program || program === selectedProgram || isUpdatingProgram || isUpdatingYear) return;
 
     const previousProgram = selectedProgram;
     setSelectedProgram(program);
     setIsUpdatingProgram(true);
     setError(null);
+    setAcademicMessage(null);
 
     try {
       const updated = await updateProfile({ program });
+      setAcademicMessage('Program saved.');
       setSelectedProgram(updated.program);
       setProfile((prev) => (prev ? {
         ...prev,
@@ -74,6 +79,31 @@ export const Profile = () => {
       setError('Could not update your program. Please try again.');
     } finally {
       setIsUpdatingProgram(false);
+    }
+  };
+
+  const handleYearChange = async (event: ChangeEvent<HTMLSelectElement>) => {
+    const yearLevel = event.target.value;
+    if (!yearLevel || yearLevel === profile?.year_level || isUpdatingYear || isUpdatingProgram) return;
+    setIsUpdatingYear(true);
+    setError(null);
+    setAcademicMessage(null);
+    try {
+      const updated = await updateProfile({ year_level: Number(yearLevel) });
+      setProfile(previous => previous ? {
+        ...previous, program: updated.program, year_level: updated.year_level, section: updated.section,
+      } : updated);
+      setSelectedProgram(updated.program);
+      if (studentCache.dashboard) {
+        studentCache.dashboard.user = {
+          ...studentCache.dashboard.user, program: updated.program, year_level: updated.year_level, section: updated.section,
+        };
+      }
+      setAcademicMessage('Year level saved.');
+    } catch {
+      setError('Could not save your year level. Please try again.');
+    } finally {
+      setIsUpdatingYear(false);
     }
   };
 
@@ -218,7 +248,7 @@ export const Profile = () => {
                 aria-label="Academic program"
                 value={selectedProgram ?? ''}
                 onChange={(event) => void handleProgramChange(event)}
-                disabled={!profile || isUpdatingProgram}
+                disabled={!profile || isUpdatingProgram || isUpdatingYear}
                 className="h-[26px] appearance-none rounded-full border border-gray-200 bg-gray-50 py-1 pl-3 pr-7 text-xs font-bold leading-4 text-gray-600 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               >
                 <option value="" disabled>Program not set</option>
@@ -234,10 +264,26 @@ export const Profile = () => {
                 className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-gray-500 dark:text-slate-400"
               />
             </div>
-            <span className="px-3 py-1 bg-brand-50 dark:bg-brand-950/50 border border-brand-100 dark:border-brand-900/50 text-brand-700 dark:text-brand-300 text-xs font-bold rounded-full">
-              {profile?.year_level ? `Year ${profile.year_level}` : 'PUP Santa Maria Bulacan'}
-            </span>
+            <div className="relative inline-flex">
+              <select
+                aria-label="Year level"
+                value={profile?.year_level ?? ''}
+                onChange={(event) => void handleYearChange(event)}
+                disabled={!profile || isUpdatingProgram || isUpdatingYear}
+                className="h-[26px] appearance-none rounded-full border border-brand-100 bg-brand-50 py-1 pl-3 pr-7 text-xs font-bold leading-4 text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:cursor-wait disabled:opacity-70 dark:border-brand-900/50 dark:bg-brand-950/50 dark:text-brand-300"
+              >
+                <option value="" disabled>Year level not provided</option>
+                {profile?.year_level && !YEAR_LEVEL_OPTIONS.some(option => option.value === profile.year_level) && (
+                  <option value={profile.year_level}>{yearLevelLabel(profile.year_level)}</option>
+                )}
+                {YEAR_LEVEL_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+              <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-brand-600 dark:text-brand-300" />
+            </div>
           </div>
+          <p role="status" className="mt-2 text-xs text-brand-700 dark:text-brand-300">
+            {isUpdatingProgram || isUpdatingYear ? 'Saving academic details…' : academicMessage ?? 'Choose your program and year level. Changes save automatically.'}
+          </p>
         </div>
       </div>
 

@@ -62,41 +62,37 @@ def update_profile(
     db: Session = Depends(get_db),
 ):
     """Self-service profile update for program, year_level, section, and companion_pet."""
-    has_program_only = (
-        payload.program is not None
-        and payload.year_level is None
-        and payload.section is None
-    )
     has_academic = payload.program is not None or payload.year_level is not None or payload.section is not None
     if payload.display_name is not None:
         display_name = payload.display_name.strip()
         if not display_name:
             raise HTTPException(status_code=422, detail="Display name cannot be empty.")
         profile.display_name = display_name
-    if has_program_only:
-        if payload.program not in PROGRAM_OPTIONS:
+    if has_academic:
+        program = payload.program if payload.program is not None else profile.program
+        year_level = str(payload.year_level) if payload.year_level is not None else profile.year_level
+        if payload.program is not None and payload.program not in PROGRAM_OPTIONS and not (
+            payload.section and payload.year_level
+            and is_valid_combination(payload.program, payload.year_level, payload.section)
+        ):
             raise HTTPException(
                 status_code=422,
                 detail=f"Invalid program '{payload.program}'. Allowed programs: {', '.join(PROGRAM_OPTIONS)}",
             )
-        if profile.program != payload.program:
-            profile.year_level = None
-            profile.section = None
-        profile.program = payload.program
-    elif has_academic:
-        if not (payload.program and payload.year_level and payload.section):
-            raise HTTPException(
-                status_code=422,
-                detail="Program, year level, and section must all be provided together.",
-            )
-        if not is_valid_combination(payload.program, payload.year_level, payload.section):
+        # Year is useful for aggregate analytics even when no section is assigned.
+        # Clear a stale section when either academic grouping changes.
+        section = profile.section if (program, year_level) == (profile.program, profile.year_level) else None
+        if payload.section is not None and (
+            not program or year_level not in ("1", "2", "3", "4")
+            or not is_valid_combination(program, int(year_level), payload.section)
+        ):
             raise HTTPException(
                 status_code=422,
                 detail="Selected section is not valid for this program and year level.",
             )
-        profile.program = payload.program
-        profile.year_level = str(payload.year_level)
-        profile.section = payload.section
+        profile.program = program
+        profile.year_level = year_level
+        profile.section = payload.section if payload.section is not None else section
 
     if payload.companion_pet is not None:
         pet_candidate = payload.companion_pet.strip().lower()

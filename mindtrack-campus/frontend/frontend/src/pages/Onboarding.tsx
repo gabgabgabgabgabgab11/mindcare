@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { MOOD_OPTIONS } from '../constants/mood';
-import { listJournalEntries, listWellnessCheckIns, signConsent, submitWellnessCheckIn } from '../services/studentApi';
+import { listJournalEntries, listWellnessCheckIns, signConsent, submitWellnessCheckIn, updateProfile } from '../services/studentApi';
+import { YEAR_LEVEL_OPTIONS } from '../constants/academicYears';
 import { studentCache } from '../services/studentCache';
 import { getActivityStreak, queueStreakCelebration } from '../utils/activityStreak';
 import { useAuth } from '../contexts/useAuth';
@@ -18,6 +19,7 @@ export const Onboarding = () => {
   const [step, setStep] = useState<number>(() => (hasActiveConsent === true ? 4 : 1));
   const [isFading, setIsFading] = useState(false);
   const [isSavingConsent, setIsSavingConsent] = useState(false);
+  const [yearLevel, setYearLevel] = useState('');
   const [isSavingMood, setIsSavingMood] = useState(false);
   const [selectedMoodScore, setSelectedMoodScore] = useState<MoodScore | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,9 +40,17 @@ export const Onboarding = () => {
       checkedConsentRef.current = true;
       setIsSavingConsent(true);
       try {
+        if (yearLevel) {
+          const updated = await updateProfile({ year_level: Number(yearLevel) });
+          if (studentCache.dashboard) {
+            studentCache.dashboard.user = {
+              ...studentCache.dashboard.user, year_level: updated.year_level, section: updated.section,
+            };
+          }
+        }
         await signConsent();
       } catch {
-        setError('We could not save your consent. Please try again.');
+        setError('We could not save your setup and consent. Please try again.');
         setIsSavingConsent(false);
         return;
       } finally {
@@ -132,6 +142,17 @@ export const Onboarding = () => {
             <div className="text-6xl mb-6">{screens[step - 1].icon}</div>
             <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-4">{screens[step - 1].title}</h1>
             <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-10">{screens[step - 1].text}</p>
+
+            {step === 3 && (
+              <div className="mb-6 w-full text-left">
+                <label htmlFor="onboarding-year-level" className="text-sm font-bold text-slate-700 dark:text-slate-200">Year level <span className="font-normal text-slate-500">(optional)</span></label>
+                <select id="onboarding-year-level" value={yearLevel} onChange={event => setYearLevel(event.target.value)} disabled={isSavingConsent} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                  <option value="">Choose year level</option>
+                  {YEAR_LEVEL_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+                <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">You can update your program and year level later in Profile.</p>
+              </div>
+            )}
 
             {/* Pagination Dots */}
             <div className="flex gap-2 mb-8">

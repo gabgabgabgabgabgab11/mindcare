@@ -42,6 +42,15 @@ class MantraWallPost(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
 
+class MantraWallHeart(Base):
+    """One persistent heart per account and post; identities stay server-side."""
+    __tablename__ = "mantra_wall_hearts"
+
+    post_id = Column(PG_UUID(as_uuid=True), ForeignKey("mantra_wall_posts.id", ondelete="CASCADE"), primary_key=True)
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
 class MantraWallReport(Base):
     """A student flagging a post for admin review. Reporter identity
     is stored (never anonymous to admins) so reports can't be spammed

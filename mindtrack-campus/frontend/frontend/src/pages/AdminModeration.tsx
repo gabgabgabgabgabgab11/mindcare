@@ -638,6 +638,14 @@ export const AdminModeration = () => {
                       <span className="italic">{post.filter_reason}</span>
                     </div>
                   )}
+                  {post.moderation_status === 'rejected' && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                      <p className="text-xs text-slate-500">Reviewed this post? Approving it will publish it to the student wall.</p>
+                      <Button type="button" disabled={processingIds.has(post.id)} isLoading={processingIds.has(post.id)} onClick={() => void handleModerate(post.id, 'approved')} className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700">
+                        <CheckCircle2 className="h-4 w-4" aria-hidden="true" />Approve rejected post
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))

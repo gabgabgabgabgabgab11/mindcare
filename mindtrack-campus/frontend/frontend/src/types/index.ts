@@ -164,6 +164,8 @@ export interface MantraWallPost {
   moderation_status: ModerationStatus;
   filter_reason?: string | null;
   created_at: string;
+  heart_count: number;
+  has_sent_heart: boolean;
   anonymity_notice?: string;
   seek_assistance_notice?: string;
 }

@@ -15,6 +15,8 @@ from app.schemas.mantra_wall import (
     MantraWallPostResponse,
     MantraWallReportCreateRequest,
     MantraWallReportResponse,
+    MantraWallHeartRequest,
+    MantraWallHeartResponse,
 )
 from app.security.consent_gate import require_consent
 from app.security.rbac import require_admin, require_authenticated_user
@@ -27,6 +29,8 @@ from app.services.mantra_wall_repository import (
     list_reports_for_admin,
     list_visible_posts,
     moderate_post,
+    get_heart_summaries,
+    set_post_heart,
     resolve_reports_for_post,
 )
 from app.services.audit_log_repository import log_event
@@ -40,11 +44,12 @@ admin_router = APIRouter(prefix="/api/v1/admin/mantra-wall", tags=["admin-mantra
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _post_response(post: MantraWallPost) -> MantraWallPostResponse:
+def _post_response(post: MantraWallPost, heart_count: int = 0, has_sent_heart: bool = False) -> MantraWallPostResponse:
     return MantraWallPostResponse(
         id=post.id, post_type=post.post_type, content=post.content,
         nickname=post.nickname, moderation_status=post.moderation_status,
         filter_reason=post.filter_reason, created_at=post.created_at,
+        heart_count=heart_count, has_sent_heart=has_sent_heart,
     )
 
 
@@ -113,7 +118,18 @@ def list_mantra_posts(
     db: Session = Depends(get_db),
 ):
     posts = list_visible_posts(db, profile.id)
-    return [_post_response(p) for p in posts]
+    hearts = get_heart_summaries(db, [p.id for p in posts], profile.id)
+    return [_post_response(p, **hearts.get(p.id, {})) for p in posts]
+
+
+@router.put("/posts/{post_id}/heart", response_model=MantraWallHeartResponse)
+def save_mantra_heart(
+    post_id: UUID,
+    payload: MantraWallHeartRequest,
+    profile: Profile = Depends(require_consent),
+    db: Session = Depends(get_db),
+):
+    return set_post_heart(db, post_id, profile.id, payload.hearted)
 
 
 @router.post("/posts/{post_id}/report", response_model=MantraWallReportResponse, status_code=status.HTTP_201_CREATED)

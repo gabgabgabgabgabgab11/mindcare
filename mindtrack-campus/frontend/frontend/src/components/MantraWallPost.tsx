@@ -29,14 +29,29 @@ const TYPE_ICON = {
 interface MantraWallPostProps {
   post: MantraWallPostModel;
   onReport: (id: string) => Promise<void>;
+  onHeart: (id: string, hearted: boolean) => Promise<void>;
   isReporting: boolean;
   isReported: boolean;
 }
 
-export const MantraWallPostCard = ({ post, onReport, isReporting, isReported }: MantraWallPostProps) => {
+export const MantraWallPostCard = ({ post, onReport, onHeart, isReporting, isReported }: MantraWallPostProps) => {
   const style = TYPE_STYLE[post.post_type];
   const TypeIcon = TYPE_ICON[post.post_type];
-  const [hasSentHeart, setHasSentHeart] = useState(false);
+  const hasSentHeart = post.has_sent_heart ?? false;
+  const [isSavingHeart, setIsSavingHeart] = useState(false);
+  const [heartError, setHeartError] = useState<string | null>(null);
+  const handleHeart = async () => {
+    if (isSavingHeart || post.moderation_status !== 'approved') return;
+    setIsSavingHeart(true);
+    setHeartError(null);
+    try {
+      await onHeart(post.id, !hasSentHeart);
+    } catch {
+      setHeartError('Your heart could not be saved. Please try again.');
+    } finally {
+      setIsSavingHeart(false);
+    }
+  };
 
   return (
     <article className={`flex h-full flex-col gap-4 rounded-3xl border p-5 sm:p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${style}`}>
@@ -67,7 +82,8 @@ export const MantraWallPostCard = ({ post, onReport, isReporting, isReported }: 
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setHasSentHeart((current) => !current)}
+            onClick={() => void handleHeart()}
+            disabled={isSavingHeart || post.moderation_status !== 'approved'}
             aria-pressed={hasSentHeart}
             aria-label={hasSentHeart ? 'Remove your heart' : 'Send a heart'}
             className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
@@ -77,8 +93,8 @@ export const MantraWallPostCard = ({ post, onReport, isReporting, isReported }: 
             }`}
           >
             <Heart className={`h-4 w-4 ${hasSentHeart ? 'fill-current' : ''}`} aria-hidden="true" />
-            <span>Send Heart</span>
-            <span className="tabular-nums">{hasSentHeart ? 1 : 0}</span>
+            <span>{isSavingHeart ? 'Saving…' : hasSentHeart ? 'Heart sent' : 'Send Heart'}</span>
+            <span className="tabular-nums">{post.heart_count ?? 0}</span>
           </button>
           <button
             type="button"
@@ -91,6 +107,7 @@ export const MantraWallPostCard = ({ post, onReport, isReporting, isReported }: 
           </button>
         </div>
       </div>
+      {heartError && <p role="alert" className="text-xs font-semibold text-rose-700 dark:text-rose-300">{heartError}</p>}
     </article>
   );
 };

@@ -53,8 +53,19 @@ class MantraWallPostResponse(BaseModel):
     moderation_status: str
     filter_reason: Optional[str] = None
     created_at: datetime
+    heart_count: int = 0
+    has_sent_heart: bool = False
     anonymity_notice: str = ANONYMITY_NOTICE
     seek_assistance_notice: str = SEEK_ASSISTANCE_NOTICE
+
+
+class MantraWallHeartRequest(BaseModel):
+    hearted: bool
+
+
+class MantraWallHeartResponse(BaseModel):
+    heart_count: int
+    has_sent_heart: bool
 
 
 class MantraWallReportCreateRequest(BaseModel):
