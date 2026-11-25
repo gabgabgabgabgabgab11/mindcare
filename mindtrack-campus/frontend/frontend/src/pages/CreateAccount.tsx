@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../config/supabaseClient';
 import { Button } from '../components/Button';
 import { TermsModal } from '../components/TermsModal';
 import { ThemeToggle } from '../components/ThemeToggle';
+
+import { describeSignupError } from '../utils/signupErrors';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -17,6 +19,7 @@ export const CreateAccount = () => {
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionInFlight = useRef(false);
   const passwordRequirements = [
     ['At least 8 characters', password.length >= 8],
     ['One uppercase letter', /[A-Z]/.test(password)],
@@ -27,19 +30,34 @@ export const CreateAccount = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submissionInFlight.current) return;
     setError(null);
-    if (!emailPattern.test(email)) return setError('Use a valid email address (e.g. you@gmail.com).');
+    const normalizedEmail = email.trim();
+    if (!emailPattern.test(normalizedEmail)) return setError('Use a valid email address (e.g. you@gmail.com).');
     if (!isPasswordValid) return setError('Password does not meet the requirements.');
     if (password !== confirmPassword) return setError('Password confirmation does not match.');
     if (!hasAgreed) return setError('Accept the Terms & Conditions and Privacy Policy to continue.');
+    submissionInFlight.current = true;
     setIsSubmitting(true);
-    const { error: signUpError } = await supabase.auth.signUp({ email, password });
-    setIsSubmitting(false);
-    if (signUpError) {
-      setError('This account could not be created. Check the details and try again.');
-      return;
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({ email: normalizedEmail, password });
+      if (signUpError) {
+        setError(describeSignupError(signUpError));
+        return;
+      }
+      if (!data.user) {
+        setError('Registration could not be confirmed. Check your inbox or try signing in before creating another account.');
+        return;
+      }
+      navigate('/login', { state: { message: data.session
+        ? 'Account ready. Loading your account…'
+        : 'Check your email (including spam) for a confirmation link if verification is required, then sign in. If you already have an account, sign in or reset your password.' } });
+    } catch (signUpError) {
+      setError(describeSignupError(signUpError));
+    } finally {
+      submissionInFlight.current = false;
+      setIsSubmitting(false);
     }
-    navigate('/login', { state: { message: 'Account created. Check your email if verification is required, then sign in.' } });
   };
 
   return (
@@ -69,6 +87,7 @@ export const CreateAccount = () => {
               Email Address
               <input
                 type="email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -82,6 +101,7 @@ export const CreateAccount = () => {
               <div className="relative mt-2">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
                   required
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -110,6 +130,7 @@ export const CreateAccount = () => {
               Confirm Password
               <input
                 type="password"
+                autoComplete="new-password"
                 required
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
@@ -145,7 +166,7 @@ export const CreateAccount = () => {
             <Button
               type="submit"
               isLoading={isSubmitting}
-              disabled={!hasAgreed}
+              disabled={!hasAgreed || isSubmitting}
               className="w-full rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 py-3.5 text-white font-semibold shadow-lg shadow-brand-600/25 border-none transition-all cursor-pointer"
             >
               Create Account

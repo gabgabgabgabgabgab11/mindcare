@@ -5,6 +5,7 @@ import { Button } from '../components/Button';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { clearFailedLogins, getLoginCooldownMs, recordFailedLogin } from '../utils/loginAttemptLimiter';
 import { ForgotPasswordModal } from '../components/ForgotPasswordModal';
+import { DevPatchNotes } from '../components/DevPatchNotes';
 import { Eye, EyeOff } from 'lucide-react';
 import { consumeInactivityNotice } from '../utils/sessionInactivity';
 
@@ -72,14 +73,14 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen lg:h-screen lg:overflow-hidden flex flex-col lg:flex-row bg-slate-50 dark:bg-slate-950 w-full relative transition-colors duration-200">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50 dark:bg-slate-950 w-full relative transition-colors duration-200">
       {/* Quick Theme Toggle in corner */}
       <div className="absolute top-4 right-4 z-30">
         <ThemeToggle variant="pill" />
       </div>
 
       {/* LEFT COLUMN: Login Card */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-10 relative z-10 min-h-screen lg:min-h-0">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-10 relative z-10 min-h-screen lg:min-h-screen">
         {/* Soft background ambient gradient glows */}
         <div className="absolute top-[10%] left-[-10%] w-96 h-96 bg-brand-200/50 dark:bg-brand-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-50 pointer-events-none"></div>
         <div className="absolute bottom-[-10%] right-[10%] w-96 h-96 bg-brand-200/50 dark:bg-brand-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-50 pointer-events-none"></div>
@@ -220,6 +221,8 @@ export const Login = () => {
               </div>
             </div>
           </div>
+          <DevPatchNotes />
+          <Link to="/user-manual" className="mt-4 inline-block text-sm font-bold text-teal-200 hover:underline">Need a hand? Read the user manual →</Link>
         </div>
       </div>
 

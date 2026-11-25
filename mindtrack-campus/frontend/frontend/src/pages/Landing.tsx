@@ -1,7 +1,7 @@
 import { ArrowRight, BookHeart, Heart, HeartHandshake, ShieldCheck, Sparkles, UsersRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PETS } from '../constants/pets';
-import { ThemeToggle } from '../components/ThemeToggle';
+import { PublicHeader } from '../components/PublicHeader';
 import { ScrollCompanion } from '../components/ScrollCompanion';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 
@@ -34,26 +34,7 @@ export const Landing = () => {
       {/* The Single MindCare Guide Companion - guides you across the page as you scroll */}
       <ScrollCompanion />
 
-      {/* Navigation Bar */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-emerald-100/70 bg-white/80 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/80">
-        <nav className="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 sm:px-8">
-          <Link to="/" className="flex items-center gap-2.5" aria-label="MindCare home">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-700/20">
-              <Heart className="h-5 w-5 fill-current" />
-            </span>
-            <span className="text-lg font-black leading-5 tracking-tight text-slate-900 dark:text-white">MindCare</span>
-          </Link>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Link to="/about" className="hidden text-sm font-bold text-slate-600 transition hover:text-emerald-700 sm:block dark:text-slate-300 dark:hover:text-emerald-300">
-              About us
-            </Link>
-            <ThemeToggle variant="icon" />
-            <Link to="/login" className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-700/20 transition hover:-translate-y-0.5 hover:bg-emerald-700">
-              Sign in
-            </Link>
-          </div>
-        </nav>
-      </header>
+      <PublicHeader />
 
       {/* Hero Section with Living Background Orbs */}
       <section className="relative isolate min-h-[780px] overflow-hidden px-5 pb-20 pt-34 sm:px-8 lg:min-h-[820px]">
