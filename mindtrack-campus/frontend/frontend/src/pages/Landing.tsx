@@ -37,7 +37,7 @@ export const Landing = () => {
       <PublicHeader />
 
       {/* Hero Section with Living Background Orbs */}
-      <section className="relative isolate min-h-[780px] overflow-hidden px-5 pb-20 pt-34 sm:px-8 lg:min-h-[820px]">
+      <section className="relative isolate min-h-[780px] overflow-hidden px-5 pb-14 pt-12 sm:px-8 sm:pb-20 sm:pt-24 lg:min-h-[820px] lg:pt-34">
         {/* Living, bouncing ambient circles that move and bounce like they're alive */}
         <div className="alive-orb alive-orb-1 top-12 -left-20 h-80 w-80 bg-emerald-400/35 dark:bg-emerald-600/25" aria-hidden="true" />
         <div className="alive-orb alive-orb-2 top-24 -right-24 h-96 w-96 bg-sky-400/35 dark:bg-sky-600/25" aria-hidden="true" />
@@ -45,7 +45,7 @@ export const Landing = () => {
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_.95fr] lg:gap-8">
           {/* Left Column: Hero Copy with Buttery-Smooth Entrance */}
-          <div className="pt-10 text-center lg:pt-18 lg:text-left">
+          <div className="text-center sm:pt-4 lg:pt-18 lg:text-left">
             <div className="hero-fade-1">
               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white/80 px-4 py-2 text-xs font-bold text-emerald-800 shadow-sm dark:border-emerald-900 dark:bg-slate-900/80 dark:text-emerald-200">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
@@ -53,7 +53,7 @@ export const Landing = () => {
               </span>
             </div>
 
-            <h1 className="hero-fade-2 mt-7 max-w-3xl text-5xl font-black leading-[1.02] tracking-tight text-slate-950 sm:text-6xl lg:text-7xl dark:text-white">
+            <h1 className="hero-fade-2 mt-6 max-w-3xl text-[clamp(2.125rem,8.5vw,3rem)] font-black leading-[1.1] tracking-tight text-slate-950 sm:mt-7 sm:text-6xl sm:leading-[1.02] lg:text-7xl dark:text-white">
               Your wellbeing<br />
               <span className="text-emerald-600 dark:text-emerald-400">deserves a pause.</span>
             </h1>

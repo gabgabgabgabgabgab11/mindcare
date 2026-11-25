@@ -67,6 +67,7 @@ export const listNotifications = async (unreadOnly = false) => {
 
 export const markNotificationRead = async (notificationId: string) => {
   const { data } = await api.patch<Notification>(`/api/v1/notifications/${notificationId}/read`);
+  window.dispatchEvent(new Event('mindcare:notifications-changed'));
   return data;
 };
 

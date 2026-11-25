@@ -15,14 +15,38 @@ export const Notifications = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    listNotifications().then(setNotifications).catch(() => setError('Notifications could not be loaded.')).finally(() => setIsLoading(false));
+    let active = true;
+    let pending = false;
+    const refresh = async () => {
+      if (pending || document.visibilityState === 'hidden') return;
+      pending = true;
+      try {
+        const items = await listNotifications();
+        if (active) { setNotifications(items); setError(null); }
+      } catch {
+        if (active) setError('Notifications could not be loaded.');
+      } finally {
+        pending = false;
+        if (active) setIsLoading(false);
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 30_000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, []);
 
   const handleRead = async (notification: NotificationItem) => {
     try {
       if (!notification.is_read) {
-      const updated = await markNotificationRead(notification.id);
-      setNotifications((current) => current.map((item) => item.id === updated.id ? updated : item));
+        const updated = await markNotificationRead(notification.id);
+        setNotifications((current) => current.map((item) => item.id === updated.id ? updated : item));
       }
     } catch {
       setError('That notification could not be marked as read.');

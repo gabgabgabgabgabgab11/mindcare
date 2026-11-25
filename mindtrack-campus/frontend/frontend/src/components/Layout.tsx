@@ -26,10 +26,13 @@ import { DesktopNavLink } from './DesktopNavLink';
 import { SidebarLink } from './SidebarLink';
 import { ThemeToggle } from './ThemeToggle';
 import { ProductTour } from './ProductTour';
+import { NotificationBadge } from './NotificationBadge';
+import { useUnreadNotifications } from '../hooks/useUnreadNotifications';
 import { getProductTourPage, type TourReplayRequest } from './productTourSteps';
 
 export const Layout = () => {
   const { role, session, logout } = useAuth();
+  const unreadCount = useUnreadNotifications(session?.user.id, role === 'student');
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -281,10 +284,10 @@ export const Layout = () => {
           <div data-tour="utilities" className="flex items-center gap-3">
             <NavLink
               to="/notifications"
-              aria-label="Notifications"
-              title="Notifications"
+              aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+              title={unreadCount ? `${unreadCount} unread notifications` : 'Notifications'}
               className={({ isActive }) =>
-                `p-2 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-center shadow-xs ${
+                `relative p-2 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-center shadow-xs ${
                   isActive
                     ? 'bg-brand-50 border-brand-200 text-brand-600 dark:bg-brand-950/40 dark:border-brand-800 dark:text-brand-300'
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-brand-300'
@@ -292,6 +295,7 @@ export const Layout = () => {
               }
             >
               <Bell className="w-4 h-4" aria-hidden="true" />
+              <NotificationBadge count={unreadCount} />
             </NavLink>
             <ThemeToggle variant="icon" />
             {tourPage && (
@@ -387,7 +391,7 @@ export const Layout = () => {
           <SidebarLink
             to="/notifications"
             label="Notifications"
-            icon={<Bell className="w-5 h-5" />}
+            icon={<span className="relative inline-flex" role="img" aria-label={unreadCount ? `${unreadCount} unread notifications` : 'Notifications'}><Bell className="w-5 h-5" aria-hidden="true" /><NotificationBadge count={unreadCount} /></span>}
           />
           <SidebarLink
             to="/profile"
