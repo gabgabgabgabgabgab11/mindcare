@@ -26,6 +26,7 @@ import {
   Legend,
 } from 'recharts';
 import { Card } from '../components/Card';
+import { downloadWellnessPdfReport } from '../utils/wellnessReport';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { YEAR_LEVEL_OPTIONS, yearLevelLabel } from '../constants/academicYears';
 import {
@@ -417,7 +418,7 @@ export const AdminAnalytics = () => {
           <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5 shadow-2xs">
             <button
               type="button"
-              disabled={isLoading || !overview}
+              disabled={isLoading || !overview || !!error}
               onClick={() => exportCsv(overview, screening, programGroups, yearGroups, activeFilters)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-md transition-colors disabled:opacity-40 cursor-pointer"
               title="Export as CSV"
@@ -428,10 +429,10 @@ export const AdminAnalytics = () => {
             <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
             <button
               type="button"
-              disabled={isLoading || !overview}
-              onClick={() => exportCsv(overview, screening, programGroups, yearGroups, activeFilters)}
+              disabled={isLoading || !overview || !!error}
+              onClick={() => downloadWellnessPdfReport({ generatedAt: new Date().toISOString(), overview, screening, programGroups, yearGroups, sectionGroups, trend, filters: activeFilters })}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-md transition-colors disabled:opacity-40 cursor-pointer"
-              title="Export as PDF (uses CSV export)"
+              title="Export as styled PDF"
             >
               <FileText className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
               <span>PDF Report</span>
