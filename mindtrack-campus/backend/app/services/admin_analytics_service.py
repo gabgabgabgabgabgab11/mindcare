@@ -485,17 +485,13 @@ def get_wellness_trend(
         date_start = datetime.now(timezone.utc) - timedelta(days=90)
 
     prof_filters = _profile_filters(program, year_level, section)
-    student_ids_stmt = (
+    student_ids_subq = (
         select(Profile.id)
         .where(Profile.role == "student")
         .where(*prof_filters)
         if prof_filters
         else select(Profile.id).where(Profile.role == "student")
-    )
-    student_ids = [row[0] for row in db.execute(student_ids_stmt).all()]
-
-    if not student_ids:
-        return {"trend": []}
+    ).scalar_subquery()
 
     q = (
         select(
@@ -508,7 +504,7 @@ def get_wellness_trend(
             ).filter(AssessmentResult.assessment_code == "gad7").label("avg_gad7"),
             func.count().label("assessment_count"),
         )
-        .where(AssessmentResult.user_id.in_(student_ids))
+        .where(AssessmentResult.user_id.in_(student_ids_subq))
         .group_by(cast(AssessmentResult.created_at, Date))
         .order_by(cast(AssessmentResult.created_at, Date))
     )
