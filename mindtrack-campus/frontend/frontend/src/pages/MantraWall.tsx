@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Heart, Sparkles, Trophy, PenLine, ShieldCheck } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -29,6 +29,8 @@ type SubmitFeedback = {
 
 export const MantraWall = () => {
   const navigate = useNavigate();
+  const { hash } = useLocation();
+  const scrolledTo = useRef('');
   const [posts, setPosts] = useState<MantraWallPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newPost, setNewPost] = useState('');
@@ -47,6 +49,16 @@ export const MantraWall = () => {
       .catch(() => setError('Posts could not be loaded.'))
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!hash) { scrolledTo.current = ''; return; }
+    if (scrolledTo.current === hash || !/^#post-[0-9a-f-]{36}$/i.test(hash)) return;
+    const target = document.getElementById(hash.slice(1));
+    if (target) {
+      target.scrollIntoView({ block: 'center' });
+      scrolledTo.current = hash;
+    }
+  }, [hash, posts]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

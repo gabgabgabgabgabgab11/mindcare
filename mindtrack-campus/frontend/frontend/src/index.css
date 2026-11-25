@@ -3,6 +3,34 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Native select menus need their own palette; inherited badge colors can
+   otherwise produce pale text on a light operating-system popup. */
+.profile-academic-select {
+  color-scheme: light;
+}
+
+.profile-academic-select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.profile-academic-select option:disabled {
+  color: #64748b;
+}
+
+.dark .profile-academic-select {
+  color-scheme: dark;
+}
+
+.dark .profile-academic-select option {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+.dark .profile-academic-select option:disabled {
+  color: #cbd5e1;
+}
+
 html, body, #root {
   width: 100%;
   min-height: 100vh;

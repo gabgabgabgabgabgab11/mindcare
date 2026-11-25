@@ -7,6 +7,7 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.models.mantra_wall import MantraWallPost, MantraWallReport, MantraWallHeart
+from app.models.notification import Notification
 from app.services.content_filter import determine_moderation_status
 
 
@@ -67,12 +68,37 @@ def set_post_heart(db: Session, post_id: uuid.UUID, user_id: uuid.UUID, hearted:
     if post is None:
         raise HTTPException(status_code=404, detail="Post not available")
     heart = db.get(MantraWallHeart, (post_id, user_id))
+    added = hearted and heart is None
+    removed = not hearted and heart is not None
     if hearted and heart is None:
         db.add(MantraWallHeart(post_id=post_id, user_id=user_id))
     elif not hearted and heart is not None:
         db.delete(heart)
     db.flush()
     result = get_heart_summaries(db, [post_id], user_id).get(post_id, {"heart_count": 0, "has_sent_heart": False})
+    if added or removed:
+        # The post lock also serializes per-post notification updates. Reuse
+        # the existing type string to identify the share without new columns.
+        notification_type = f"mantra_wall_hearts:{post_id}"
+        notification = db.execute(select(Notification).where(
+            Notification.user_id == post.user_id,
+            Notification.notification_type == notification_type,
+        )).scalar_one_or_none()
+        notify_author = added and user_id != post.user_id
+        if notification is None and notify_author:
+            notification = Notification(user_id=post.user_id, notification_type=notification_type)
+            db.add(notification)
+        if notification is not None:
+            count = result["heart_count"]
+            excerpt = " ".join(post.content.split())
+            excerpt = excerpt[:77] + "…" if len(excerpt) > 80 else excerpt
+            notification.title = "Hearts on your Mantra Wall share"
+            notification.message = f'Your share “{excerpt}” now has {count} {"heart" if count == 1 else "hearts"}.'
+            if notify_author:
+                notification.is_read = False
+                notification.read_at = None
+                notification.created_at = datetime.now(timezone.utc)
+    # Save the heart and notification together; no nested helper commits.
     db.commit()
     return result
 

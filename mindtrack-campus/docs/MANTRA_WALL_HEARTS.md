@@ -8,6 +8,14 @@ The composite primary key prevents duplicate hearts. Updates lock the post row o
 
 Admins can open **All Posts**, filter **Rejected**, and choose **Approve rejected post**. This uses the existing admin-protected moderation endpoint, including its audit and author-notification behavior. Student queries then include the approved post. Historical automated filter reasons remain available to moderators.
 
+## Heart notifications
+
+When another account adds a new heart, the author receives an in-app notification identifying the share by a short excerpt and its current heart total. Each post has one reusable notification identified by `mantra_wall_hearts:<post UUID>` in the existing string notification type. Another account's new heart updates the total, moves the notification to the newest position, and makes it unread. Repeated saves do not create duplicates or reset the read state. Self-hearts do not create alerts. Removing a heart updates an existing total without creating a new alert or resetting its read state.
+
+Selecting the notification marks it read and opens the corresponding wall card, which is scrolled into view and highlighted. Other account identities are not included in the message. Notifications are loaded when the Notifications page opens or refreshes; this does not add push delivery or live subscriptions. Existing hearts are not backfilled into historical notifications.
+
+**The notification enhancement requires no additional Alembic migration.** It uses the existing notifications table and the hearts table from `c03a91e84d72`. Deploy its frontend and backend together. Notification and heart changes commit in the same transaction. Validation includes separate-share notifications, current counts, repeat requests, self-hearts, removals, and read-state behavior; 36 Mantra Wall and notification tests pass, along with the frontend build and targeted notification/wall lint.
+
 ## Production deployment
 
 This heart fix **does require a schema migration**, unlike the year-level update.

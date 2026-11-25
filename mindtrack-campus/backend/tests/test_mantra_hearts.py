@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import Session
 
 from app.models.mantra_wall import MantraWallPost, MantraWallHeart
+from app.models.notification import Notification
 from app.services.mantra_wall_repository import get_heart_summaries, set_post_heart, moderate_post, list_visible_posts
 
 
@@ -16,6 +17,7 @@ def wall():
     engine = create_engine("sqlite://")
     MantraWallPost.__table__.create(engine)
     MantraWallHeart.__table__.create(engine)
+    Notification.__table__.create(engine)
     post_id, author, student = uuid4(), uuid4(), uuid4()
     with Session(engine) as db:
         db.add(MantraWallPost(id=post_id, user_id=author, post_type="win", content="Finished my assignment", moderation_status="approved", created_at=datetime.now(timezone.utc)))
@@ -73,3 +75,48 @@ def test_admin_can_approve_rejected_post_and_student_can_see_it(wall):
         updated = moderate_post(db, post_id, uuid4(), "approved")
         assert updated.moderation_status == "approved"
         assert [post.id for post in list_visible_posts(db, student)] == [post_id]
+
+
+def test_author_gets_one_notification_per_share_with_updated_total(wall):
+    engine, post_id, author, student = wall
+    with Session(engine) as db:
+        set_post_heart(db, post_id, student, True)
+        first = db.scalar(select(Notification))
+        assert first.user_id == author
+        assert first.notification_type == f"mantra_wall_hearts:{post_id}"
+        assert 'Finished my assignment' in first.message
+        assert '1 heart.' in first.message
+        first.is_read = True
+        db.commit()
+        set_post_heart(db, post_id, student, True)
+        assert first.is_read is True  # retries do not generate unread alerts
+        set_post_heart(db, post_id, uuid4(), True)
+        assert db.scalar(select(func.count()).select_from(Notification)) == 1
+        assert first.is_read is False
+        assert '2 hearts.' in first.message
+
+
+def test_self_hearts_do_not_notify_and_removal_does_not_create_an_alert(wall):
+    engine, post_id, author, student = wall
+    with Session(engine) as db:
+        set_post_heart(db, post_id, author, True)
+        assert db.scalar(select(func.count()).select_from(Notification)) == 0
+        set_post_heart(db, post_id, student, True)
+        note = db.scalar(select(Notification))
+        note.is_read = True
+        db.commit()
+        set_post_heart(db, post_id, student, False)
+        assert '1 heart.' in note.message
+        assert note.is_read is True
+        assert db.scalar(select(func.count()).select_from(Notification)) == 1
+
+
+def test_different_shares_have_separate_notifications(wall):
+    engine, post_id, author, student = wall
+    second_id = uuid4()
+    with Session(engine) as db:
+        db.add(MantraWallPost(id=second_id, user_id=author, post_type="win", content="Another small win", moderation_status="approved"))
+        db.commit()
+        set_post_heart(db, post_id, student, True)
+        set_post_heart(db, second_id, student, True)
+        assert db.scalar(select(func.count()).select_from(Notification)) == 2

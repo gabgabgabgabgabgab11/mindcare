@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/Card';
 import { CompanionHeader } from '../components/CompanionHeader';
 import { listNotifications, markNotificationRead } from '../services/studentApi';
 import type { Notification as NotificationItem } from '../types';
 
+const heartPostId = (notification: NotificationItem) =>
+  /^mantra_wall_hearts:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.exec(notification.notification_type)?.[1];
+
 export const Notifications = () => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,13 +19,16 @@ export const Notifications = () => {
   }, []);
 
   const handleRead = async (notification: NotificationItem) => {
-    if (notification.is_read) return;
     try {
+      if (!notification.is_read) {
       const updated = await markNotificationRead(notification.id);
       setNotifications((current) => current.map((item) => item.id === updated.id ? updated : item));
+      }
     } catch {
       setError('That notification could not be marked as read.');
     }
+    const postId = heartPostId(notification);
+    if (postId) navigate(`/mantra-wall#post-${postId}`);
   };
 
   return (
@@ -58,6 +66,7 @@ export const Notifications = () => {
                 {!notification.is_read && <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-brand-600 dark:bg-brand-400" aria-label="Unread" />}
               </div>
               <p className="mt-3 text-xs text-gray-400 dark:text-slate-400">{new Date(notification.created_at).toLocaleString()}</p>
+              {heartPostId(notification) && <p className="mt-2 text-xs font-bold text-brand-700 dark:text-brand-300">View your share →</p>}
             </button>
           ))}
         </div>

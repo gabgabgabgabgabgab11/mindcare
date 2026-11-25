@@ -249,7 +249,7 @@ export const Profile = () => {
                 value={selectedProgram ?? ''}
                 onChange={(event) => void handleProgramChange(event)}
                 disabled={!profile || isUpdatingProgram || isUpdatingYear}
-                className="h-[26px] appearance-none rounded-full border border-gray-200 bg-gray-50 py-1 pl-3 pr-7 text-xs font-bold leading-4 text-gray-600 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="profile-academic-select h-9 appearance-none rounded-full border border-gray-200 bg-gray-50 py-1 pl-3 pr-7 text-xs font-bold leading-4 text-gray-600 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:cursor-wait disabled:opacity-70 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
               >
                 <option value="" disabled>Program not set</option>
                 {selectedProgram && !PROGRAM_OPTIONS.includes(selectedProgram) && (
@@ -270,7 +270,7 @@ export const Profile = () => {
                 value={profile?.year_level ?? ''}
                 onChange={(event) => void handleYearChange(event)}
                 disabled={!profile || isUpdatingProgram || isUpdatingYear}
-                className="h-[26px] appearance-none rounded-full border border-brand-100 bg-brand-50 py-1 pl-3 pr-7 text-xs font-bold leading-4 text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:cursor-wait disabled:opacity-70 dark:border-brand-900/50 dark:bg-brand-950/50 dark:text-brand-300"
+                className="profile-academic-select h-9 appearance-none rounded-full border border-brand-100 bg-brand-50 py-1 pl-3 pr-7 text-xs font-bold leading-4 text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:cursor-wait disabled:opacity-70 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
               >
                 <option value="" disabled>Year level not provided</option>
                 {profile?.year_level && !YEAR_LEVEL_OPTIONS.some(option => option.value === profile.year_level) && (

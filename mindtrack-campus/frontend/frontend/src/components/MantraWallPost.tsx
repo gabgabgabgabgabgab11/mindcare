@@ -54,7 +54,7 @@ export const MantraWallPostCard = ({ post, onReport, onHeart, isReporting, isRep
   };
 
   return (
-    <article className={`flex h-full flex-col gap-4 rounded-3xl border p-5 sm:p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${style}`}>
+    <article id={`post-${post.id}`} className={`scroll-mt-24 flex h-full flex-col gap-4 rounded-3xl border p-5 sm:p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md target:ring-2 target:ring-emerald-500 ${style}`}>
       <div className="flex justify-between items-start gap-3">
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm ${TYPE_BADGE_STYLE[post.post_type]}`}>
           <TypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
