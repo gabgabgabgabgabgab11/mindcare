@@ -8,10 +8,10 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, requireNoActiveConsent = false }) => {
-  const { isAuthenticated, isLoading, role, hasActiveConsent, isMfaVerified } = useAuth();
+  const { isAuthenticated, isLoading, role, hasActiveConsent, authError } = useAuth();
 
   if (isLoading) {
-    return null;
+    return <div role="status" className="flex min-h-screen items-center justify-center text-sm text-slate-600 dark:text-slate-300">Loading your account…</div>;
   }
 
   if (!isAuthenticated) {
@@ -19,7 +19,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, re
     return <Navigate to="/login" replace />;
   }
 
-  if (!isMfaVerified) return <Navigate to="/login" replace />;
+  if (!role || authError) return <Navigate to="/login" replace />;
 
   if (role && !allowedRoles.includes(role)) {
     // Redirect unauthorized users (e.g., student trying to access admin page)
