@@ -1,6 +1,3 @@
-import base64
-import binascii
-import json
 from typing import Optional
 
 import httpx
@@ -14,7 +11,7 @@ class SupabaseUser:
     """Minimal identity confirmed by Supabase — NOT our application's
     Profile model. This only proves who the caller is."""
 
-    def __init__(self, id: str, email: Optional[str], aal: Optional[str]):
+    def __init__(self, id: str, email: Optional[str], aal: Optional[str] = None):
         self.id = id
         self.email = email
         self.aal = aal
@@ -60,16 +57,9 @@ def verify_supabase_token(token: str) -> SupabaseUser:
         )
 
     data = response.json()
-    try:
-        payload = token.split(".")[1]
-        payload += "=" * (-len(payload) % 4)
-        claims = json.loads(base64.urlsafe_b64decode(payload))
-    except (IndexError, ValueError, binascii.Error, json.JSONDecodeError):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
-    if claims.get("aal") != "aal2":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Two-factor authentication is required")
-
-    return SupabaseUser(id=data["id"], email=data.get("email"), aal=claims.get("aal"))
+    # Supabase verified this bearer token. Accept password-authenticated sessions
+    # without requiring an additional authenticator challenge.
+    return SupabaseUser(id=data["id"], email=data.get("email"))
 
 
 def get_current_supabase_user(

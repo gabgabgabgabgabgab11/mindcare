@@ -62,6 +62,6 @@ export function consumeInactivityNotice(): string | undefined {
   try {
     if (!window.sessionStorage.getItem(SESSION_EXPIRED_MESSAGE_KEY)) return;
     window.sessionStorage.removeItem(SESSION_EXPIRED_MESSAGE_KEY);
-    return 'You were signed out after seven days of inactivity. Sign in and verify your authenticator code again.';
+    return 'You were signed out after seven days of inactivity. Please sign in again.';
   } catch { return; }
 }

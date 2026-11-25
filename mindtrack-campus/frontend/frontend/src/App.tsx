@@ -29,6 +29,7 @@ import { AboutUs } from './pages/AboutUs';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
 import { Landing } from './pages/Landing';
+import { UserManual } from './pages/UserManual';
 function App() {
   return (
     <ThemeProvider>
@@ -43,6 +44,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/about" element={<AboutUs />} />
+            <Route path="/user-manual" element={<UserManual />} />
             
             {/* ========================================== */}
             {/* FULL SCREEN PROTECTED ROUTES (No Layout)   */}

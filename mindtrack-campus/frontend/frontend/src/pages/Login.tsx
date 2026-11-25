@@ -1,17 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
 import { Button } from '../components/Button';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { clearFailedLogins, getLoginCooldownMs, recordFailedLogin } from '../utils/loginAttemptLimiter';
 import { ForgotPasswordModal } from '../components/ForgotPasswordModal';
+import { DevPatchNotes } from '../components/DevPatchNotes';
 import { Eye, EyeOff } from 'lucide-react';
 import { consumeInactivityNotice } from '../utils/sessionInactivity';
 
 export const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, beginMfa, verifyMfa, isAuthenticated, isMfaVerified, isLoading, role } = useAuth();
+  const { login, isAuthenticated, isLoading, role, authError, retryAccountLoad } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,14 +21,6 @@ export const Login = () => {
   const [cooldownMs, setCooldownMs] = useState(() => getLoginCooldownMs());
   const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [mfaCode, setMfaCode] = useState('');
-  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
-  const [mfaQrCode, setMfaQrCode] = useState<string | null>(null);
-  const [mfaSecret, setMfaSecret] = useState<string | null>(null);
-  const [isMfaBusy, setIsMfaBusy] = useState(false);
-  const [isMfaEnrollment, setIsMfaEnrollment] = useState(false);
-  const [mfaInitAttempt, setMfaInitAttempt] = useState(0);
-  const mfaInitStarted = useRef(false);
   const [inactivityMessage] = useState(consumeInactivityNotice);
   const registrationMessage = (location.state as { message?: string } | null)?.message ?? inactivityMessage;
 
@@ -36,25 +29,12 @@ export const Login = () => {
   // anything picked on this screen. Students are routed to /welcome
   // where returning students do mood/screening and new students do full onboarding.
   useEffect(() => {
-    if (!isLoading && isAuthenticated && isMfaVerified && role) {
+    if (!isLoading && isAuthenticated && role) {
       navigate(role === 'admin' ? '/admin' : '/welcome');
     }
-  }, [isAuthenticated, isMfaVerified, isLoading, navigate, role]);
+  }, [isAuthenticated, isLoading, navigate, role]);
 
-  useEffect(() => {
-    if (!isAuthenticated || isMfaVerified || mfaFactorId || mfaInitStarted.current) return;
-    mfaInitStarted.current = true;
-    setIsMfaBusy(true);
-    beginMfa().then((setup) => {
-      setMfaFactorId(setup.factorId);
-      setIsMfaEnrollment(setup.isEnrollment);
-      setMfaQrCode(setup.qrCode ?? null);
-      setMfaSecret(setup.secret ?? null);
-    }).catch(() => {
-      mfaInitStarted.current = false;
-      setError('Two-factor setup could not start. Check that TOTP authentication is enabled in Supabase, then try again.');
-    }).finally(() => setIsMfaBusy(false));
-  }, [beginMfa, isAuthenticated, isMfaVerified, mfaFactorId, mfaInitAttempt]);
+
 
   useEffect(() => {
     if (!cooldownMs) return;
@@ -75,28 +55,32 @@ export const Login = () => {
     try {
       await login(email, password);
       clearFailedLogins();
-      // Navigation happens in the useEffect above once the real role
-      // resolves - isSubmitting stays true through that gap.
-    } catch {
+      // Account loading has its own bounded loading/error state.
+    } catch (loginError) {
+      if (typeof loginError !== 'object' || loginError === null || !('code' in loginError) || loginError.code !== 'invalid_credentials') {
+        setError('Sign-in could not be completed. Please check your connection and try again.');
+        return;
+      }
       recordFailedLogin();
       const nextCooldown = getLoginCooldownMs();
       setCooldownMs(nextCooldown);
       setError(nextCooldown
         ? 'Too many unsuccessful sign-in attempts. Please wait 15 minutes before trying again.'
         : 'Invalid email or password. Please try again.');
+    } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen lg:h-screen lg:overflow-hidden flex flex-col lg:flex-row bg-slate-50 dark:bg-slate-950 w-full relative transition-colors duration-200">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50 dark:bg-slate-950 w-full relative transition-colors duration-200">
       {/* Quick Theme Toggle in corner */}
       <div className="absolute top-4 right-4 z-30">
         <ThemeToggle variant="pill" />
       </div>
 
       {/* LEFT COLUMN: Login Card */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-10 relative z-10 min-h-screen lg:min-h-0">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-10 relative z-10 min-h-screen lg:min-h-screen">
         {/* Soft background ambient gradient glows */}
         <div className="absolute top-[10%] left-[-10%] w-96 h-96 bg-brand-200/50 dark:bg-brand-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-50 pointer-events-none"></div>
         <div className="absolute bottom-[-10%] right-[10%] w-96 h-96 bg-brand-200/50 dark:bg-brand-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-50 pointer-events-none"></div>
@@ -114,9 +98,9 @@ export const Login = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Welcome back to your safe space</p>
           </div>
 
-          {error && (
+          {(error || authError) && (
             <div role="alert" className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-sm font-medium rounded-xl px-4 py-3 mb-4">
-              {error}
+              {error || authError}
             </div>
           )}
           {registrationMessage && (
@@ -173,29 +157,12 @@ export const Login = () => {
               Sign In to Portal
             </Button>
           </form>}
-          {isAuthenticated && !isMfaVerified && (
-            <form onSubmit={async (event) => {
-              event.preventDefault();
-              if (!mfaFactorId || isMfaBusy) return;
-              setIsMfaBusy(true);
-              setError(null);
-              try {
-                await verifyMfa(mfaFactorId, mfaCode.replace(/\s/g, ''));
-              } catch {
-                setError('That verification code was not accepted. Check your authenticator app and try again.');
-              } finally { setIsMfaBusy(false); }
-            }} className="mt-5 flex flex-col gap-3" aria-live="polite">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{isMfaEnrollment ? 'Set up two-factor authentication' : 'Verify your sign-in'}</h2>
-              <p className="text-sm text-slate-600 dark:text-slate-400">{isMfaEnrollment ? 'Scan this QR code with an authenticator app, then enter the six-digit code it displays.' : 'Enter the six-digit code from your authenticator app to finish signing in.'}</p>
-              {isMfaBusy && !mfaFactorId && <p className="text-sm text-slate-500">Preparing secure verification…</p>}
-              {!isMfaBusy && !mfaFactorId && <button type="button" onClick={() => setMfaInitAttempt((attempt) => attempt + 1)} className="text-sm font-semibold text-brand-600 hover:underline">Try setting up verification again</button>}
-              {mfaQrCode && <img src={mfaQrCode.startsWith('data:') ? mfaQrCode : `data:image/svg+xml;utf8,${encodeURIComponent(mfaQrCode)}`} alt="Authenticator setup QR code" className="mx-auto h-44 w-44 rounded-xl border border-slate-200 bg-white p-2" />}
-              {mfaSecret && <p className="text-xs text-slate-500 dark:text-slate-400">Manual setup key: <code className="select-all font-mono">{mfaSecret}</code></p>}
-              <label className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300" htmlFor="mfa-code">Authenticator code</label>
-              <input id="mfa-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9 ]{6,8}" maxLength={8} required value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} placeholder="123456" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
-              <Button type="submit" disabled={!mfaFactorId} isLoading={isMfaBusy} className="w-full">{isMfaEnrollment ? 'Verify and finish setup' : 'Verify and sign in'}</Button>
-            </form>
+          {isAuthenticated && authError && (
+            <Button type="button" onClick={() => { void retryAccountLoad(); }} isLoading={isLoading} className="mt-4 w-full">
+              Try loading my account again
+            </Button>
           )}
+          {isAuthenticated && isLoading && <p role="status" className="mt-4 text-center text-sm text-slate-600 dark:text-slate-300">Loading your account…</p>}
           <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
             New to MindCare?{' '}
             <Link to="/create-account" className="font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline">
@@ -254,6 +221,8 @@ export const Login = () => {
               </div>
             </div>
           </div>
+          <DevPatchNotes />
+          <Link to="/user-manual" className="mt-4 inline-block text-sm font-bold text-teal-200 hover:underline">Need a hand? Read the user manual →</Link>
         </div>
       </div>
 
