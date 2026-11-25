@@ -23,7 +23,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from sqlalchemy import Date, cast, distinct, func, select
+from sqlalchemy import Date, Float, cast, distinct, func, select
 from sqlalchemy.orm import Session
 
 from app.models.assessment import AssessmentResult
@@ -497,10 +497,10 @@ def get_wellness_trend(
         select(
             cast(AssessmentResult.created_at, Date).label("date"),
             func.avg(
-                AssessmentResult.total_score.cast("float")
+                AssessmentResult.total_score.cast(Float)
             ).filter(AssessmentResult.assessment_code == "phq9").label("avg_phq9"),
             func.avg(
-                AssessmentResult.total_score.cast("float")
+                AssessmentResult.total_score.cast(Float)
             ).filter(AssessmentResult.assessment_code == "gad7").label("avg_gad7"),
             func.count().label("assessment_count"),
         )
