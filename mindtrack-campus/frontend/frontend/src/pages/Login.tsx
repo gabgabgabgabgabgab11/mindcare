@@ -1,3 +1,4 @@
+import { BrandLogo } from '../components/BrandLogo';
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
@@ -87,13 +88,7 @@ export const Login = () => {
 
         <div className="w-full max-w-md p-8 md:p-10 rounded-3xl shadow-xl shadow-brand-950/5 dark:shadow-2xl dark:shadow-black/50 border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl relative z-10 transition-colors">
           <div className="flex flex-col items-center justify-center mb-8 text-center">
-            <div className="w-12 h-12 bg-teal-700 dark:bg-teal-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-teal-800/25 ring-4 ring-teal-50 dark:ring-teal-950/60 mb-4 transition-all">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20 4c-8.2.3-13.7 3-15.6 7.8-1.2 3.1.5 6.2 3.6 6.2C14.6 18 18.2 11.3 20 4Z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
-                <path d="M5.3 19.2c2.8-4.8 6.7-8.4 11.8-11.2" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
-                <path d="M10.2 14.6c-.2-1.4-.9-2.6-2.1-3.5" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
-              </svg>
-            </div>
+            <BrandLogo className="mb-4 h-16 w-16" />
             <h1 className="mindcare-wordmark text-3xl font-black text-slate-900 dark:text-white tracking-tight">MindCare</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Welcome back to your safe space</p>
           </div>

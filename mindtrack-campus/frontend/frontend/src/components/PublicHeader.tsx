@@ -1,4 +1,5 @@
-import { Heart, Menu, X } from 'lucide-react';
+import { BrandLogo } from './BrandLogo';
+import { Menu, X } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -6,7 +7,7 @@ export const PublicHeader = () => (
   <header className="sticky top-0 z-50 border-b border-emerald-100/70 bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90">
     <nav aria-label="Main navigation" className="relative mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:px-8 sm:py-4">
       <Link to="/" className="flex shrink-0 items-center gap-2 sm:gap-2.5" aria-label="MindCare home">
-        <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-700/20 sm:h-10 sm:w-10"><Heart className="h-4 w-4 fill-current sm:h-5 sm:w-5" aria-hidden="true" /></span>
+        <BrandLogo className="h-9 w-9 sm:h-10 sm:w-10" />
         <span className="mindcare-wordmark text-base font-black tracking-tight text-slate-900 sm:text-lg dark:text-white">MindCare</span>
       </Link>
       <div className="flex shrink-0 items-center gap-2 sm:gap-5">

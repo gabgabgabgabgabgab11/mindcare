@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { ArrowRight, BookOpen, Heart, LifeBuoy } from 'lucide-react';
+import { ArrowRight, BookOpen, LifeBuoy } from 'lucide-react';
+import { BrandLogo } from '../components/BrandLogo';
 import { Link } from 'react-router-dom';
 import { PublicHeader } from '../components/PublicHeader';
 
@@ -100,7 +101,7 @@ export const UserManual = () => {
           </div>
         </div>
       </main>
-      <footer className="border-t border-emerald-100 px-5 py-8 dark:border-slate-800"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 text-sm text-slate-500 dark:text-slate-400"><Link to="/" className="flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-300"><Heart size={17} aria-hidden="true" />MindCare</Link><Link to="/privacy-policy" className="hover:underline">Privacy policy</Link><span>Small steps toward student wellbeing.</span></div></footer>
+      <footer className="border-t border-emerald-100 px-5 py-8 dark:border-slate-800"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 text-sm text-slate-500 dark:text-slate-400"><Link to="/" className="mindcare-wordmark flex items-center gap-2 text-emerald-700 dark:text-emerald-300"><BrandLogo className="h-7 w-7" />MindCare</Link><Link to="/privacy-policy" className="hover:underline">Privacy policy</Link><span>Small steps toward student wellbeing.</span></div></footer>
     </div>
   );
 };

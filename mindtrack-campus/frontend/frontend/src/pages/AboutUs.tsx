@@ -1,6 +1,7 @@
+import { BrandLogo } from '../components/BrandLogo';
+import { LogoStory } from '../components/LogoStory';
 import {
   ArrowLeft,
-  Check,
   CircleCheck,
   Eye,
   Heart,
@@ -138,14 +139,6 @@ const VALIDATORS = [
 const linkedinSearchUrl = (name: string) =>
   `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(name)}`;
 
-const BrandMark = () => (
-  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-sm shadow-emerald-900/15">
-    <Heart className="h-5 w-5" aria-hidden="true" />
-    <span className="absolute bottom-2 right-2 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-emerald-700 ring-2 ring-emerald-600">
-      <Check className="h-2.5 w-2.5 stroke-3" aria-hidden="true" />
-    </span>
-  </div>
-);
 
 export const AboutUs = () => {
   useScrollReveal();
@@ -174,7 +167,7 @@ export const AboutUs = () => {
               <span className="hidden sm:inline">Back</span>
             </Link>
             <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-2.5" aria-label="MindCare home">
-              <BrandMark />
+              <BrandLogo className="h-11 w-11" />
               <span className="min-w-0">
                 <span className="mindcare-wordmark block truncate text-base font-black leading-tight tracking-tight text-slate-900 dark:text-white sm:text-lg">MindCare</span>
               </span>
@@ -297,6 +290,8 @@ export const AboutUs = () => {
             <i />
           </a>
         </section>
+
+        <LogoStory />
 
         {/* Purpose / Mission / Vision Section */}
         <section aria-labelledby="purpose-heading" className="about-section relative isolate overflow-hidden mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-24">
@@ -539,7 +534,7 @@ export const AboutUs = () => {
       <footer className="border-t border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div className="reveal-on-scroll mx-auto grid max-w-7xl gap-9 px-5 py-10 sm:px-8 lg:grid-cols-[1.5fr_1fr] lg:items-center">
           <div className="flex items-start gap-3">
-            <BrandMark />
+            <BrandLogo className="h-11 w-11" />
             <div>
               <p className="mindcare-wordmark text-base font-black tracking-tight text-slate-900 dark:text-white">MindCare</p>
               <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500 dark:text-slate-400">
