@@ -33,4 +33,12 @@ def test_auth_provider_timeout_still_rejects_unverified_token(monkeypatch):
     monkeypatch.setattr(supabase_auth.httpx, "get", timeout)
     with pytest.raises(HTTPException) as error:
         supabase_auth.verify_supabase_token("unverified-token")
-    assert error.value.status_code == 401
+    assert error.value.status_code == 503
+
+
+@pytest.mark.parametrize("status_code", [429, 500, 502, 503])
+def test_provider_outage_does_not_claim_session_is_invalid(monkeypatch, status_code):
+    monkeypatch.setattr(supabase_auth.httpx, "get", lambda *a, **k: httpx.Response(status_code))
+    with pytest.raises(HTTPException) as error:
+        supabase_auth.verify_supabase_token("unverified-token")
+    assert error.value.status_code == 503

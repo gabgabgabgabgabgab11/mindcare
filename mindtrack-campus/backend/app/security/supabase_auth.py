@@ -1,7 +1,7 @@
 from typing import Optional
 
 import httpx
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, Request, status
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -46,11 +46,16 @@ def verify_supabase_token(token: str) -> SupabaseUser:
         )
     except httpx.RequestError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Could not verify authentication token",
         )
 
     if response.status_code != 200:
+        if response.status_code not in (401, 403):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Authentication service temporarily unavailable",
+            )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired authentication token",
@@ -63,9 +68,12 @@ def verify_supabase_token(token: str) -> SupabaseUser:
 
 
 def get_current_supabase_user(
+    request: Request,
     authorization: Optional[str] = Header(default=None),
 ) -> SupabaseUser:
     """FastAPI dependency: extracts and verifies the bearer token.
     Does not touch our database — see profile_service for that."""
     token = _extract_bearer_token(authorization)
-    return verify_supabase_token(token)
+    user = verify_supabase_token(token)
+    request.state.verified_auth_user_id = user.id
+    return user

@@ -7,7 +7,7 @@ import { adminCache } from '../services/adminCache';
 import { studentCache } from '../services/studentCache';
 import { AuthContext } from './AuthContextValue';
 import { isSessionInactive, recordSessionActivity, markInactivitySignOut, sessionActivityKey } from '../utils/sessionInactivity';
-import { createAccountLoader } from '../utils/accountLoader';
+import { createAccountLoader, retryAccountRequest } from '../utils/accountLoader';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -18,10 +18,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const generation = useRef(0);
   const currentKey = useRef<string | null>(null);
   const loader = useRef(createAccountLoader(async () => {
-    const { data } = await api.get<MeResponse>('/api/v1/auth/me', { timeout: 15_000 });
+    const { data } = await retryAccountRequest(() => api.get<MeResponse>('/api/v1/auth/me', { timeout: 15_000 }));
     let consent: boolean | null = null;
     if (data.role === 'student') {
-      const response = await api.get<{ has_active_consent: boolean }>('/api/v1/consent/status', { timeout: 15_000 });
+      const response = await retryAccountRequest(() => api.get<{ has_active_consent: boolean }>('/api/v1/consent/status', { timeout: 15_000 }));
       consent = response.data.has_active_consent;
     }
     return { role: data.role, consent };
@@ -110,6 +110,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       listener.subscription.unsubscribe();
     };
   }, [clearAccount, loadAccount]);
+
+  useEffect(() => {
+    if (!session || !authError) return;
+    const recover = () => {
+      if (document.visibilityState !== 'hidden' && navigator.onLine) void loadAccount(session);
+    };
+    window.addEventListener('online', recover);
+    window.addEventListener('focus', recover);
+    document.addEventListener('visibilitychange', recover);
+    return () => {
+      window.removeEventListener('online', recover);
+      window.removeEventListener('focus', recover);
+      document.removeEventListener('visibilitychange', recover);
+    };
+  }, [session, authError, loadAccount]);
 
   useEffect(() => {
     if (!session) return;

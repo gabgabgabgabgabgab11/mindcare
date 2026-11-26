@@ -4,8 +4,23 @@ import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 const source=readFileSync(new URL('../src/utils/accountLoader.ts',import.meta.url),'utf8');
 const { outputText }=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}});
-const { createAccountLoader }=await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
+const { createAccountLoader, retryAccountRequest }=await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
 const deferred=()=>{ let resolve,reject; const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject}; };
+
+test('temporary auth service/network failures recover without another login', async()=>{
+  for (const failure of [{response:{status:503}}, {code:'ECONNABORTED'}, {response:{status:429}}]) {
+    let calls=0;const waits=[];
+    const result=await retryAccountRequest(async()=>{if(++calls<3)throw failure;return 'account';},async ms=>{waits.push(ms);});
+    assert.equal(result,'account');assert.equal(calls,3);assert.deepEqual(waits,[750,1500]);
+  }
+});
+test('account retries are bounded and do not retry rejected tokens or permissions', async()=>{
+  for (const status of [401,403,400,503]) {
+    let calls=0;
+    await assert.rejects(retryAccountRequest(async()=>{calls++;throw {response:{status}};},async()=>{}));
+    assert.equal(calls,status===503?3:1);
+  }
+});
 
 test('bootstrap and auth event share the same account request',async()=>{
   let calls=0; const request=deferred();

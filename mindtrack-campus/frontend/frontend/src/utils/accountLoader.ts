@@ -1,3 +1,20 @@
+/** Retry only transient failures; never retry an authorization rejection. */
+export async function retryAccountRequest<T>(
+  request: () => Promise<T>,
+  wait = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)),
+): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try { return await request(); } catch (error) {
+      const failure = error as { response?: { status?: number }; code?: string };
+      const status = failure?.response?.status;
+      const transient = status === 408 || status === 429 || (status !== undefined && status >= 500) ||
+        (!status && ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'].includes(failure?.code ?? ''));
+      if (!transient || attempt >= 2) throw error;
+      await wait(750 * (attempt + 1));
+    }
+  }
+}
+
 /** Share duplicate auth-event loads; cache only successful results per session. */
 export function createAccountLoader<T>(fetchAccount: () => Promise<T>) {
   let version = 0;

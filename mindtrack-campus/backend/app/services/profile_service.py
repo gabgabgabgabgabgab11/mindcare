@@ -1,6 +1,7 @@
 import uuid
 
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.models.profile import Profile
 
@@ -17,6 +18,15 @@ def get_or_create_profile(db: Session, user_id: str) -> Profile:
     if profile is None:
         profile = Profile(id=uuid.UUID(user_id), role="student")
         db.add(profile)
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            # Email confirmation, multiple tabs or concurrent API requests can
+            # both observe a missing profile. Reuse the winning transaction.
+            db.rollback()
+            existing = db.get(Profile, uuid.UUID(user_id))
+            if existing is None:
+                raise
+            return existing
         db.refresh(profile)
     return profile
