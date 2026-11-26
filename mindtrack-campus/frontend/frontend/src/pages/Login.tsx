@@ -94,7 +94,7 @@ export const Login = () => {
                 <path d="M10.2 14.6c-.2-1.4-.9-2.6-2.1-3.5" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
               </svg>
             </div>
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">MindCare</h1>
+            <h1 className="mindcare-wordmark text-3xl font-black text-slate-900 dark:text-white tracking-tight">MindCare</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Welcome back to your safe space</p>
           </div>
 

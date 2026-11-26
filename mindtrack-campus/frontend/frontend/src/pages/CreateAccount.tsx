@@ -69,7 +69,7 @@ export const CreateAccount = () => {
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-xl items-center justify-center">
         <div className="w-full p-6 md:p-10 rounded-3xl shadow-xl shadow-brand-950/5 dark:shadow-2xl dark:shadow-black/50 border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl transition-colors">
           <div className="mb-8">
-            <p className="text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">MindCare</p>
+            <p className="mindcare-wordmark text-sm font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">MindCare</p>
             <h1 className="mt-2 text-3xl font-black text-slate-900 dark:text-white tracking-tight">Create Your MindCare Account</h1>
             <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
               Set up your account to begin monitoring your wellness and accessing student support resources.

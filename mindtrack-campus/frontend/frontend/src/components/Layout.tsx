@@ -86,7 +86,7 @@ export const Layout = () => {
             </button>
             <div className="flex items-center gap-2">
               <Leaf className="w-5 h-5 text-brand-600 dark:text-brand-400" />
-              <span className="text-base font-bold text-slate-900 dark:text-white tracking-tight">MindCare Ops</span>
+              <span className="mindcare-wordmark text-base font-bold text-slate-900 dark:text-white tracking-tight">MindCare Ops</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -115,7 +115,7 @@ export const Layout = () => {
             <div className="flex items-center gap-2">
               <Leaf className="w-5 h-5 text-brand-600 dark:text-brand-400" />
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">MindCare Console</span>
+                <span className="mindcare-wordmark text-sm font-bold text-slate-900 dark:text-white leading-tight">MindCare Console</span>
               </div>
             </div>
             <button
@@ -175,7 +175,7 @@ export const Layout = () => {
               <Leaf className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">MindCare Console</h2>
+              <h2 className="mindcare-wordmark text-sm font-bold text-slate-900 dark:text-white leading-tight">MindCare Console</h2>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Admin Operations</p>
             </div>
           </div>
@@ -261,7 +261,7 @@ export const Layout = () => {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-black text-brand-900 dark:text-brand-300 tracking-tight flex items-center gap-2">
+            <h1 className="mindcare-wordmark text-xl md:text-2xl font-black text-brand-900 dark:text-brand-300 tracking-tight flex items-center gap-2">
               <Leaf className="w-5 h-5 text-brand-600 dark:text-brand-400 hidden sm:block" /> MindCare
             </h1>
             <span className="px-2 py-0.5 bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-100 dark:border-brand-800/40 text-[10px] font-bold rounded-full uppercase tracking-wider hidden sm:block">
@@ -336,7 +336,7 @@ export const Layout = () => {
         }`}
       >
         <div className="p-6 flex items-center justify-between border-b border-gray-100 dark:border-slate-800">
-          <h1 className="text-2xl font-black text-brand-900 dark:text-brand-300 tracking-tight flex items-center gap-2">
+          <h1 className="mindcare-wordmark text-2xl font-black text-brand-900 dark:text-brand-300 tracking-tight flex items-center gap-2">
             <Leaf className="w-6 h-6 text-brand-600 dark:text-brand-400" /> MindCare
           </h1>
           <button

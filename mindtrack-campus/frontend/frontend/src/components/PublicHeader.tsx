@@ -7,7 +7,7 @@ export const PublicHeader = () => (
     <nav aria-label="Main navigation" className="relative mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:px-8 sm:py-4">
       <Link to="/" className="flex shrink-0 items-center gap-2 sm:gap-2.5" aria-label="MindCare home">
         <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-700/20 sm:h-10 sm:w-10"><Heart className="h-4 w-4 fill-current sm:h-5 sm:w-5" aria-hidden="true" /></span>
-        <span className="text-base font-black tracking-tight text-slate-900 sm:text-lg dark:text-white">MindCare</span>
+        <span className="mindcare-wordmark text-base font-black tracking-tight text-slate-900 sm:text-lg dark:text-white">MindCare</span>
       </Link>
       <div className="flex shrink-0 items-center gap-2 sm:gap-5">
         <NavLink to="/about" className={({ isActive }) => `hidden text-sm font-bold sm:block ${isActive ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-600 hover:text-emerald-700 dark:text-slate-300'}`}>About us</NavLink>

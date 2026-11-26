@@ -58,7 +58,7 @@ export const Landing = () => {
               <span className="text-emerald-600 dark:text-emerald-400">deserves a pause.</span>
             </h1>
 
-            <p className="hero-fade-3 mx-auto mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg lg:mx-0 dark:text-slate-300">
+            <p className="font-editorial hero-fade-3 mx-auto mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg lg:mx-0 dark:text-slate-300">
               MindCare is a compassionate digital space for PUP Santa Maria students to reflect, build healthy routines, and find supportive resources—without pressure or judgment.
             </p>
 

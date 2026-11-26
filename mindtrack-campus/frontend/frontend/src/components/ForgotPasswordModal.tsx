@@ -69,7 +69,7 @@ export const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProp
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-5">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">MindCare</p>
+            <p className="mindcare-wordmark text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">MindCare</p>
             <h2 id="forgot-pw-title" className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
               Reset your password
             </h2>

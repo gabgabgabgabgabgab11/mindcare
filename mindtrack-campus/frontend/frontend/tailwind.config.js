@@ -6,6 +6,11 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Source Sans 3"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        brand: ['Fraunces', 'Georgia', 'serif'],
+        editorial: ['Lora', 'Georgia', 'serif'],
+      },
       colors: {
         brand: {
           50: '#eff8f6',

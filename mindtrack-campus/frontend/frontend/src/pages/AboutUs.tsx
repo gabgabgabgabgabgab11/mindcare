@@ -176,7 +176,7 @@ export const AboutUs = () => {
             <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-2.5" aria-label="MindCare home">
               <BrandMark />
               <span className="min-w-0">
-                <span className="block truncate text-base font-black leading-tight tracking-tight text-slate-900 dark:text-white sm:text-lg">MindCare</span>
+                <span className="mindcare-wordmark block truncate text-base font-black leading-tight tracking-tight text-slate-900 dark:text-white sm:text-lg">MindCare</span>
               </span>
             </Link>
           </div>
@@ -541,7 +541,7 @@ export const AboutUs = () => {
           <div className="flex items-start gap-3">
             <BrandMark />
             <div>
-              <p className="text-base font-black tracking-tight text-slate-900 dark:text-white">MindCare</p>
+              <p className="mindcare-wordmark text-base font-black tracking-tight text-slate-900 dark:text-white">MindCare</p>
               <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500 dark:text-slate-400">
                 Supporting student wellness through self-reflection and peer support. A student-developed capstone project at PUP Santa Maria Campus.
               </p>

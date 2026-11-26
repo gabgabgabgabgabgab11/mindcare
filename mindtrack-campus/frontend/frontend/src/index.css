@@ -3,6 +3,21 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@layer base {
+  body {
+    font-family: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
+  }
+}
+
+/* A consistent wordmark weight across public, student and admin screens. */
+.mindcare-wordmark {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 700;
+  font-optical-sizing: auto;
+  letter-spacing: -0.025em;
+}
+
 /* Native select menus need their own palette; inherited badge colors can
    otherwise produce pale text on a light operating-system popup. */
 .profile-academic-select {
