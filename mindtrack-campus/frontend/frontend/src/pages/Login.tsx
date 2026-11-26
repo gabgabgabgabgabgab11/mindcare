@@ -81,7 +81,7 @@ export const Login = () => {
       </div>
 
       {/* LEFT COLUMN: Login Card */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-10 relative z-10 min-h-screen lg:min-h-screen">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-10 relative z-10 min-h-screen overflow-hidden">
         {/* Soft background ambient gradient glows */}
         <div className="absolute top-[10%] left-[-10%] w-96 h-96 bg-brand-200/50 dark:bg-brand-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-50 pointer-events-none"></div>
         <div className="absolute bottom-[-10%] right-[10%] w-96 h-96 bg-brand-200/50 dark:bg-brand-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-50 pointer-events-none"></div>
