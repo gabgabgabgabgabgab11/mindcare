@@ -287,6 +287,37 @@ function ScoreBarLabel(props: { x?: string | number; y?: string | number; width?
   </text>;
 }
 
+interface ReadableTooltipItem {
+  name?: string;
+  value?: string | number;
+  payload?: Record<string, unknown>;
+}
+
+function ReadableChartTooltip({ active, label, payload }: { active?: boolean; label?: string | number; payload?: ReadableTooltipItem[] }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-slate-500 bg-slate-950 px-3 py-2 text-xs shadow-xl" style={{ color: '#fff' }}>
+      <p className="mb-1 font-bold" style={{ color: '#fff' }}>{label}</p>
+      {payload.map((item, index) => {
+        const point = item.payload ?? {};
+        const name = item.name ?? 'Result';
+        const value = Number(item.value ?? 0);
+        let detail = `${value.toFixed(1)}%`;
+        if (typeof point.count === 'number') {
+          detail = `${value.toFixed(1)}% · ${point.count} screenings`;
+        } else if (name.includes('PHQ-9 average') && typeof point.average_phq9 === 'number') {
+          detail = `${value.toFixed(1)}% of highest score · ${formatAvg(point.average_phq9)} out of 27`;
+        } else if (name.includes('GAD-7 average') && typeof point.average_gad7 === 'number') {
+          detail = `${value.toFixed(1)}% of highest score · ${formatAvg(point.average_gad7)} out of 21`;
+        } else if (name.includes('PHQ-9') || name.includes('GAD-7')) {
+          detail = formatAvg(value);
+        }
+        return <p key={`${name}-${index}`} className="leading-5" style={{ color: '#fff' }}>{name}: {detail}</p>;
+      })}
+    </div>
+  );
+}
+
 function toScorePercent(score: number | null, maxScore: number) {
   return score === null ? null : Math.min(100, (score / maxScore) * 100);
 }
@@ -808,10 +839,7 @@ export const AdminAnalytics = () => {
                       <XAxis dataKey="band" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
                       <Tooltip
-                        formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Share of completed screenings']}
-                        contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
-                        itemStyle={{ color: '#fff' }}
-                        labelStyle={{ color: '#fff', fontWeight: 700 }}
+                        content={<ReadableChartTooltip />}
                       />
                       <Bar dataKey="percentage" name="Students (% of completed assessments)" radius={[4, 4, 0, 0]}>
                         {phq9DistData.map((entry, index) => (
@@ -852,10 +880,7 @@ export const AdminAnalytics = () => {
                       <XAxis dataKey="band" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
                       <Tooltip
-                        formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Share of completed screenings']}
-                        contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
-                        itemStyle={{ color: '#fff' }}
-                        labelStyle={{ color: '#fff', fontWeight: 700 }}
+                        content={<ReadableChartTooltip />}
                       />
                       <Bar dataKey="percentage" name="Students (% of completed assessments)" radius={[4, 4, 0, 0]}>
                         {gad7DistData.map((entry, index) => (
@@ -905,10 +930,7 @@ export const AdminAnalytics = () => {
                       <XAxis dataKey="group_name" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                       <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
                       <Tooltip
-                        formatter={(value, name) => [`${Number(value).toFixed(1)}% of highest score`, name]}
-                        contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
-                        itemStyle={{ color: '#fff' }}
-                        labelStyle={{ color: '#fff', fontWeight: 700 }}
+                        content={<ReadableChartTooltip />}
                       />
                       <Legend wrapperStyle={{ fontSize: '10px' }} />
                       <Bar dataKey="phq_percentage" name="PHQ-9 average" fill="#306c64" radius={[3, 3, 0, 0]}>
@@ -980,10 +1002,7 @@ export const AdminAnalytics = () => {
                       <XAxis dataKey="group_name" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                       <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
                       <Tooltip
-                        formatter={(value, name) => [`${Number(value).toFixed(1)}% of highest score`, name]}
-                        contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
-                        itemStyle={{ color: '#fff' }}
-                        labelStyle={{ color: '#fff', fontWeight: 700 }}
+                        content={<ReadableChartTooltip />}
                       />
                       <Legend wrapperStyle={{ fontSize: '10px' }} />
                       <Bar dataKey="phq_percentage" name="PHQ-9 average" fill="#306c64" radius={[3, 3, 0, 0]}>
@@ -1109,9 +1128,7 @@ export const AdminAnalytics = () => {
                     allowDecimals={true}
                   />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
-                    itemStyle={{ color: '#fff' }}
-                    labelStyle={{ color: '#fff', fontWeight: 700 }}
+                    content={<ReadableChartTooltip />}
                   />
                   <Legend wrapperStyle={{ fontSize: '10px' }} />
                   <Line
