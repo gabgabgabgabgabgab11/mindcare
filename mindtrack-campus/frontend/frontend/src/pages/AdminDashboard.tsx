@@ -70,7 +70,7 @@ export const AdminDashboard = () => {
         'Approved Posts': kpis.approved_posts_count,
         'Active Resources': kpis.active_resources_count,
         'Audit Events (7d)': kpis.audit_events_7d_count,
-        'Open Reports': kpis.unresolved_reports_count,
+        'Reports to Review': kpis.unresolved_reports_count,
       },
       auditTimeline: auditTimeline.map((item) => ({
         date: item.date,
@@ -349,17 +349,22 @@ export const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* 5. Unresolved Reports */}
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 col-span-2 sm:col-span-1 shadow-2xs">
+        {/* 5. Reports that admins can review in the moderation queue */}
+        <button
+          type="button"
+          onClick={() => navigate('/admin/moderation')}
+          aria-label="Open moderation queue to review reports"
+          className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 col-span-2 sm:col-span-1 shadow-2xs text-left transition-colors hover:border-rose-300 dark:hover:border-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-500/40"
+        >
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-[11px] font-medium uppercase tracking-wider">Open Reports</span>
+            <span className="text-[11px] font-medium uppercase tracking-wider">Reports to Review</span>
             <AlertTriangle className="w-4 h-4 text-rose-500" />
           </div>
           <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
             {isLoading ? '—' : kpis?.unresolved_reports_count ?? 0}
           </div>
-          <div className="mt-1 text-[10px] text-rose-600 dark:text-rose-400">Pending post reports</div>
-        </div>
+          <div className="mt-1 flex items-center text-[10px] font-semibold text-rose-600 dark:text-rose-400">Open moderation queue <ArrowUpRight className="ml-1 h-3 w-3" /></div>
+        </button>
       </div>
 
       {/* Analytics Charts (2x2 Grid) */}
