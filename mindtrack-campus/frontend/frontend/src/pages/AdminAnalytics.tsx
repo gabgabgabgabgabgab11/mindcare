@@ -168,7 +168,6 @@ function exportCsv(
     lines.push(`Students who checked in,${formatRate(overview.checkin_participation_rate)}`);
     lines.push(`Journal Count,${overview.journal_count}`);
     lines.push(`Students who wrote a journal entry,${formatRate(overview.journal_participation_rate)}`);
-    lines.push(`Follow-up Flags,${overview.follow_up_flags}`);
   }
   lines.push('');
   lines.push('=== SCREENING AVERAGES ===');
@@ -743,15 +742,15 @@ export const AdminAnalytics = () => {
           Overview
         </h2>
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : overview && overview.total_students === 0 ? (
           <div className="text-center py-10 text-xs text-slate-400 dark:text-slate-500">
             No analytics available for the selected filters and date range.
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             <KpiCard
               label="Total Students"
               value={overview?.total_students ?? '—'}
@@ -785,13 +784,6 @@ export const AdminAnalytics = () => {
               accent="text-brand-600 dark:text-brand-400"
               onClick={() => scrollToAnalytics('wellness-trends')}
               actionLabel="Review activity trend"
-            />
-            <KpiCard
-              label="Follow-up Needed"
-              value={overview?.follow_up_flags ?? '—'}
-              sub="Group total; follow your campus support process"
-              icon={<AlertTriangle className="w-4 h-4" />}
-              accent="text-amber-500 dark:text-amber-400"
             />
           </div>
         )}
