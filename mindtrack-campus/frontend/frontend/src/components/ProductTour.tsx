@@ -11,12 +11,14 @@ type TourLayout = {
   viewport: { width: number; height: number };
 };
 type Position = 'top' | 'right' | 'bottom' | 'left';
-const TOUR_STORAGE_PREFIX = 'mindcare_tour_v1:';
 const SPOTLIGHT_PADDING = 8;
 const POPOVER_GUTTER = 16;
 const POPOVER_ESTIMATED_HEIGHT = 240;
 
-const getTourStorageKey = (userId: string, page: ProductTourPage) => `${TOUR_STORAGE_PREFIX}${userId}:${page}`;
+const getTourStorageKey = (userId: string, page: ProductTourPage) => {
+  const version = page === 'journal' ? 'v2' : 'v1';
+  return `mindcare_tour_${version}:${userId}:${page}`;
+};
 
 const getVisibleTarget = (targetName: string) => {
   const candidates = document.querySelectorAll<HTMLElement>(`[data-tour="${targetName}"]`);

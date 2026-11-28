@@ -516,10 +516,10 @@ export const Journal = () => {
   return (
     <div className={`relative mx-auto flex w-full flex-col gap-6 ${isEditorOpen ? 'max-w-5xl' : 'max-w-3xl'}`}>
       <div className={isEditorOpen ? 'hidden' : 'contents'}>
-      {activeNotebook ? <Card className="overflow-hidden rounded-3xl border-slate-200 p-0 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      {activeNotebook ? <Card data-tour="journal-notebooks" className="overflow-hidden rounded-3xl border-slate-200 p-0 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4 dark:border-slate-800">
           <button type="button" onClick={() => setFolderFilter('all')} className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><ArrowLeft className="h-4 w-4" />All notebooks</button>
-          <Button type="button" onClick={handleNewPage} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800"><NotebookPen className="mr-2 h-4 w-4" />New page</Button>
+          <Button type="button" data-tour="journal-create" onClick={handleNewPage} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800"><NotebookPen className="mr-2 h-4 w-4" />New page</Button>
         </div>
         <div className="relative flex min-h-36 items-end overflow-hidden p-5 sm:p-7">
           {activeNotebook.cover_image ? <img src={activeNotebook.cover_image} alt="" className="absolute inset-0 h-full w-full object-cover" /> : <div className="absolute inset-0" style={{ backgroundColor: ({ sage: '#b9d8c8', rose: '#f4c9cf', lavender: '#d8c9ef', sky: '#b9dce8', amber: '#f2d49b' })[activeNotebook.cover_color] }} />}
@@ -532,7 +532,7 @@ export const Journal = () => {
         title="My Journal"
         description="Make notebooks for different parts of life, then fill each one with pages that feel like yours."
         petSize="md"
-        action={<Button type="button" onClick={handleNewPage} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800"><NotebookPen className="mr-2 h-4 w-4" />New page</Button>}
+        action={<Button type="button" data-tour="journal-create" onClick={handleNewPage} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800"><NotebookPen className="mr-2 h-4 w-4" />New page</Button>}
       />
 
       <Card style={{ backgroundColor: '#e8f4ef', color: '#123c32', borderColor: '#c2ddd2' }} className="overflow-hidden rounded-3xl border p-0 shadow-md shadow-emerald-950/10">
@@ -551,7 +551,7 @@ export const Journal = () => {
         </div>
       </Card>
 
-      <Card className="rounded-3xl border-slate-100 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+      <Card data-tour="journal-notebooks" className="rounded-3xl border-slate-100 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
         <div className="flex items-center justify-between gap-3">
           <div><h2 className="font-extrabold text-slate-900 dark:text-white">My notebooks</h2><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Each notebook has its own title, cover, and pages.</p></div>
           <FolderPlus className="h-5 w-5 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
