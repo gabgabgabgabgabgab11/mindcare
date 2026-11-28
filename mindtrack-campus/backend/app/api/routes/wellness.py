@@ -10,6 +10,7 @@ from app.services.wellness_prioritization import (
     compute_wellness_priority,
 )
 from app.services.wellness_repository import get_latest_snapshot, get_recent_sentiment_labels
+from app.services.privacy_repository import are_journal_insights_enabled
 
 router = APIRouter(prefix="/api/v1/wellness", tags=["wellness"])
 
@@ -21,7 +22,11 @@ def get_wellness_priority(
 ):
     phq9_snapshot = get_latest_snapshot(db, profile.id, "phq9")
     gad7_snapshot = get_latest_snapshot(db, profile.id, "gad7")
-    recent_sentiments = get_recent_sentiment_labels(db, profile.id, SENTIMENT_TREND_WINDOW)
+    recent_sentiments = (
+        get_recent_sentiment_labels(db, profile.id, SENTIMENT_TREND_WINDOW)
+        if are_journal_insights_enabled(db, profile.id)
+        else []
+    )
 
     result = compute_wellness_priority(phq9_snapshot, gad7_snapshot, recent_sentiments)
     return WellnessPriorityResponse(

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { CompanionHeader } from '../components/CompanionHeader';
-import { createJournalEntry, getJournalAnalysis, listJournalEntries, listWellnessCheckIns } from '../services/studentApi';
+import { createJournalEntry, getJournalAnalysis, getPrivacySettings, listJournalEntries, listWellnessCheckIns } from '../services/studentApi';
 import { studentCache } from '../services/studentCache';
 import { getActivityStreak, queueStreakCelebration } from '../utils/activityStreak';
 import type { JournalAnalysis, JournalEntry, WellnessCheckInResponse } from '../types';
@@ -19,14 +19,22 @@ export const Journal = () => {
 
   const [pastEntries, setPastEntries] = useState<JournalEntry[]>([]);
   const [analysis, setAnalysis] = useState<JournalAnalysis | null>(null);
+  const [journalInsightsEnabled, setJournalInsightsEnabled] = useState(false);
   const [isLoadingEntries, setIsLoadingEntries] = useState(true);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
   useEffect(() => {
     listJournalEntries()
       .then(setPastEntries)
       .catch(() => setSaveError('Journal entries could not be loaded.'))
       .finally(() => setIsLoadingEntries(false));
+  }, []);
+
+  useEffect(() => {
+    getPrivacySettings()
+      .then((settings) => setJournalInsightsEnabled(settings.journal_insights_enabled))
+      .catch(() => setJournalInsightsEnabled(false));
   }, []);
 
   const handleSaveClick = () => {
@@ -38,6 +46,7 @@ export const Journal = () => {
     setShowPrivacyModal(false);
     setIsSaving(true);
     setSaveError(null);
+    setSaveNotice(null);
 
     try {
       let previousEntries: JournalEntry[] = studentCache.dashboard?.journalEntries ?? pastEntries;
@@ -61,12 +70,18 @@ export const Journal = () => {
         ];
       }
       if (nextStreak > previousStreak) queueStreakCelebration();
-      try {
-        setAnalysis(await getJournalAnalysis(createdEntry.id));
-      } catch {
+      if (journalInsightsEnabled) {
+        try {
+          setAnalysis(await getJournalAnalysis(createdEntry.id));
+        } catch {
+          setAnalysis(null);
+        }
+        setShowInsightModal(true);
+      } else {
+        setEntry('');
         setAnalysis(null);
+        setSaveNotice('Your entry was saved. Journal reflection insights are off.');
       }
-      setShowInsightModal(true);
     } catch {
       setSaveError('Your journal entry could not be saved. Please try again.');
     } finally {
@@ -122,6 +137,13 @@ export const Journal = () => {
         </div>
       </Card>
 
+      {saveNotice && (
+        <p role="status" className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+          {saveNotice}{' '}
+          <button type="button" onClick={() => navigate('/profile/privacy')} className="font-bold underline underline-offset-2">Manage settings</button>
+        </p>
+      )}
+
       {/* Past Entries */}
       <div data-tour="journal-history" className="mt-4">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Past entries</h2>
@@ -169,7 +191,9 @@ export const Journal = () => {
               Your journal is <span className="font-bold">private and confidential</span>. Your entry is protected and is not intended to be used for diagnosis.
             </p>
             <p className="text-sm text-gray-600 dark:text-slate-300 mb-8 leading-relaxed">
-              Your writing may be analyzed for general emotional tone to provide supplementary wellness insights.
+              {journalInsightsEnabled
+                ? 'Journal reflection insights are on. Your writing will be analyzed for general emotional tone after saving.'
+                : 'Journal reflection insights are off. Your entry will be saved without automated sentiment analysis. You can turn insights on in Privacy Settings.'}
             </p>
 
             <div className="flex gap-3">
@@ -196,7 +220,10 @@ export const Journal = () => {
             {isSaving ? (
               <div className="py-10 flex flex-col items-center">
                 <div className="w-10 h-10 border-4 border-brand-200 dark:border-brand-800 border-t-brand-600 rounded-full animate-spin mb-4"></div>
-                <p className="text-sm font-bold text-gray-500 dark:text-slate-400 animate-pulse">Analyzing reflection...</p>
+                <p className="text-sm font-bold text-gray-500 dark:text-slate-400 animate-pulse">Saving your journal entry...</p>
+                <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
+                  {journalInsightsEnabled ? 'Preparing your optional reflection insight.' : 'Reflection insights are off.'}
+                </p>
               </div>
             ) : (
               <>

@@ -146,7 +146,7 @@ export const Assessments = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center max-w-5xl mx-auto w-full min-h-[80vh] py-4 sm:py-6 px-2 sm:px-6">
+    <div className="flex min-h-[calc(100dvh-3.5rem)] w-[calc(100%+2rem)] max-w-none -mx-4 -mt-4 -mb-8 flex-col items-center justify-start bg-slate-50 px-4 pt-4 pb-8 dark:bg-slate-950 sm:mx-auto sm:my-0 sm:min-h-[80vh] sm:w-full sm:max-w-5xl sm:justify-center sm:bg-transparent sm:px-6 sm:py-6">
       
       {isLoadingQuestions && (
         <Card className="w-full max-w-md p-8 rounded-3xl shadow-sm border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-center animate-pulse">
@@ -165,7 +165,7 @@ export const Assessments = () => {
         <div className={`w-full transition-all duration-300 ease-in-out ${isFading ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
           
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between gap-2 mb-4">
             <button
               onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/dashboard'))}
               className="text-sm font-bold text-gray-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1 cursor-pointer"
@@ -182,7 +182,7 @@ export const Assessments = () => {
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full h-2 bg-gray-100 dark:bg-slate-800 rounded-full mb-8 overflow-hidden">
+          <div className="w-full h-2 bg-gray-100 dark:bg-slate-800 rounded-full mb-4 sm:mb-8 overflow-hidden">
             <div 
               className="h-full bg-linear-to-r from-brand-500 to-brand-600 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${((currentStep + 1) / currentQuestions.length) * 100}%` }}
@@ -190,15 +190,15 @@ export const Assessments = () => {
           </div>
 
           {/* Main Screening Layout mapped to user scales: Pet (Orange) on Left, Question (Black) on Top-Right, Choices (Blue) on Bottom-Right */}
-          <div className="flex flex-row items-center gap-2.5 sm:gap-6 w-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-6 w-full">
             
             {/* 1. ORANGE: Companion Pet on the Left (scaled to span alongside the right side) */}
-            <div className="w-[36%] xs:w-[38%] sm:w-[35%] md:w-[32%] lg:w-[30%] shrink-0 flex flex-col items-center justify-center self-center py-2">
+            <div className="w-full sm:w-[35%] md:w-[32%] lg:w-[30%] shrink-0 flex flex-row sm:flex-col items-center justify-center self-center gap-3 sm:gap-0 py-0 sm:py-2">
               <button
                 type="button"
                 onClick={handlePoke}
                 title={`Click to poke ${nickname || companionInfo.pet.name} (${petState})`}
-                className={`w-28 h-28 xs:w-36 xs:h-36 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 p-0 flex items-center justify-center transition-all duration-300 hover:scale-105 cursor-pointer select-none focus:outline-none bg-transparent border-none ${
+                className={`w-16 h-16 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 p-0 flex items-center justify-center transition-all duration-300 hover:scale-105 cursor-pointer select-none focus:outline-none bg-transparent border-none ${
                   isPoked ? 'scale-90' : ''
                 }`}
               >
@@ -210,7 +210,7 @@ export const Assessments = () => {
                   }`}
                 />
               </button>
-              <div className="flex items-center gap-1.5 mt-2 text-center">
+              <div className="flex items-center gap-1.5 mt-0 sm:mt-2 text-center">
                 <span className="text-xs sm:text-sm font-extrabold text-gray-700 dark:text-slate-200 tracking-tight">
                   {nickname || companionInfo.pet.name}
                 </span>
@@ -221,25 +221,25 @@ export const Assessments = () => {
             </div>
 
             {/* 2. RIGHT SIDE: Question Bubble (Black) on Top + Choices Card (Blue) on Bottom */}
-            <div className="flex-1 min-w-0 flex flex-col gap-2.5 sm:gap-4">
+            <div className="w-full sm:flex-1 min-w-0 flex flex-col gap-3 sm:gap-4">
               
               {/* BLACK: Question in Speech Bubble */}
               <div className="relative bg-white dark:bg-slate-900 border-2 border-brand-100 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-xs transition-colors">
                 {/* Speech bubble tail pointing left to the pet */}
-                <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-6 border-t-transparent border-r-8 border-r-white dark:border-r-slate-900 border-b-6 border-b-transparent"></div>
-                <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-0 h-0 border-t-6 border-t-transparent border-r-8 border-r-brand-100 dark:border-slate-800 border-b-6 border-b-transparent -z-10"></div>
+                <div className="absolute hidden sm:block -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-6 border-t-transparent border-r-8 border-r-white dark:border-r-slate-900 border-b-6 border-b-transparent"></div>
+                <div className="absolute hidden sm:block -left-2.5 top-1/2 -translate-y-1/2 w-0 h-0 border-t-6 border-t-transparent border-r-8 border-r-brand-100 dark:border-slate-800 border-b-6 border-b-transparent -z-10"></div>
 
-                <p className="text-[9px] xs:text-[10px] sm:text-[11px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-1 leading-snug">
+                <p className="text-[10px] sm:text-[11px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-1.5 leading-snug">
                   {questionData.instructions}
                 </p>
-                <h2 className="text-xs xs:text-sm sm:text-base md:text-xl font-black text-gray-900 dark:text-white leading-snug">
+                <h2 className="text-base md:text-xl font-black text-gray-900 dark:text-white leading-snug">
                   {currentQuestions[currentStep]}
                 </h2>
               </div>
 
               {/* BLUE: Choices Card */}
-              <Card className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xs border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
-                <div className="flex flex-col gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <Card className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xs border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
+                <div className="flex flex-col gap-2.5 sm:gap-3 mb-4">
                   {responseOptions.map(([value, option]) => {
                     const index = Number(value);
                     const isSelected = selectedAnswer === index;
@@ -248,13 +248,13 @@ export const Assessments = () => {
                         key={index}
                         onClick={() => setSelectedAnswer(index)}
                         disabled={isSubmitting}
-                        className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border-2 text-left text-xs sm:text-sm font-bold transition-all cursor-pointer disabled:opacity-60 flex items-center justify-between group ${
+                        className={`p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border-2 text-left text-sm font-bold transition-all cursor-pointer disabled:opacity-60 flex items-center justify-between group ${
                           isSelected 
                             ? 'border-brand-600 dark:border-brand-400 bg-brand-50 dark:bg-brand-900/40 text-brand-950 dark:text-white shadow-xs' 
                             : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white hover:border-brand-300 dark:hover:border-brand-500 hover:bg-brand-50/40 dark:hover:bg-slate-700/80'
                         }`}
                       >
-                        <span className="font-semibold text-xs sm:text-sm leading-snug">{option}</span>
+                        <span className="font-semibold text-sm leading-snug">{option}</span>
                         <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center transition-colors shrink-0 ml-2 ${
                           isSelected
                             ? 'border-brand-600 dark:border-brand-400 bg-brand-600 dark:border-brand-400 text-white'
@@ -269,15 +269,15 @@ export const Assessments = () => {
                   })}
                 </div>
 
-                <div className="flex items-center justify-between pt-2.5 sm:pt-4 border-t border-gray-100 dark:border-slate-800 gap-2">
-                  <p className="text-[9px] sm:text-[10px] text-gray-400 dark:text-slate-500 max-w-32 sm:max-w-44 leading-tight">
+                <div className="flex items-start sm:items-center justify-between pt-3 sm:pt-4 border-t border-gray-100 dark:border-slate-800 gap-3">
+                  <p className="text-[11px] sm:text-[10px] text-gray-500 dark:text-slate-400 max-w-[13rem] sm:max-w-44 leading-snug">
                     This screening is for self-awareness only and does not provide a diagnosis.
                   </p>
                   <Button 
                     variant="primary" 
                     onClick={handleNext} 
                     disabled={selectedAnswer === null}
-                    className={`rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm border-none shadow-md transition-all shrink-0 ${
+                    className={`rounded-xl px-5 sm:px-6 py-2.5 text-sm border-none shadow-md transition-all shrink-0 ${
                       selectedAnswer === null 
                         ? 'bg-gray-200 dark:bg-slate-800 text-gray-400 dark:text-slate-500 cursor-not-allowed' 
                         : 'bg-brand-600 hover:bg-brand-700 text-white cursor-pointer shadow-brand-600/20'

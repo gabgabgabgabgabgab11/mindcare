@@ -1,6 +1,7 @@
 import logging
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -25,6 +26,7 @@ from app.services.journal_repository import (
     update_journal_for_user,
 )
 from app.services.audit_log_repository import log_event
+from app.services.privacy_repository import are_journal_insights_enabled
 
 logger = logging.getLogger("mindtrack")
 
@@ -58,7 +60,9 @@ def create_journal_entry(
     db: Session = Depends(get_db),
 ):
     journal = create_journal(db, profile.id, payload.content)
-    _run_analysis_best_effort(db, journal.id, payload.content)
+    if are_journal_insights_enabled(db, profile.id):
+        _run_analysis_best_effort(db, journal.id, payload.content)
+    log_event(db, "journal_created", "Journal entry created", actor_id=profile.id)
     return JournalResponse(**to_response_dict(journal))
 
 
@@ -87,15 +91,16 @@ def get_journal_analysis(
     profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
+    if not are_journal_insights_enabled(db, profile.id):
+        raise HTTPException(status_code=404, detail="Journal insights are turned off")
+
     # Ownership check reuses the same 404-on-mismatch journal lookup —
     # a student cannot probe for another student's analysis by ID
     # any more than they could probe for their journal entry itself.
     get_journal_for_user(db, profile.id, journal_id)
-    from sqlalchemy import select
     stmt = select(JournalAnalysis).where(JournalAnalysis.journal_id == journal_id)
     analysis = db.execute(stmt).scalars().first()
     if analysis is None:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="No analysis available for this entry yet")
     return JournalAnalysisResponse(
         sentiment_label=analysis.sentiment_label,
@@ -112,7 +117,8 @@ def update_journal_entry(
     db: Session = Depends(get_db),
 ):
     journal = update_journal_for_user(db, profile.id, journal_id, payload.content)
-    _run_analysis_best_effort(db, journal.id, payload.content)  # re-analyze on edit
+    if are_journal_insights_enabled(db, profile.id):
+        _run_analysis_best_effort(db, journal.id, payload.content)  # re-analyze on edit
     return JournalResponse(**to_response_dict(journal))
 
 
@@ -123,24 +129,4 @@ def delete_journal_entry(
     db: Session = Depends(get_db),
 ):
     delete_journal_for_user(db, profile.id, journal_id)
-
-@router.post("", response_model=JournalResponse, status_code=status.HTTP_201_CREATED)
-def create_journal_entry(
-    payload: JournalCreateRequest,
-    profile: Profile = Depends(require_consent),
-    db: Session = Depends(get_db),
-):
-    journal = create_journal(db, profile.id, payload.content)
-    _run_analysis_best_effort(db, journal.id, payload.content)
-    log_event(db, "journal_created", "Journal entry created", actor_id=profile.id)
-    return JournalResponse(**to_response_dict(journal))
-
-
-@router.delete("/{journal_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_journal_entry(
-    journal_id: UUID,
-    profile: Profile = Depends(require_consent),
-    db: Session = Depends(get_db),
-):
-    delete_journal_for_user(db, profile.id, journal_id)
-    log_event(db, "journal_deleted", "Journal entry deleted", actor_id=profile.id)    
+    log_event(db, "journal_deleted", "Journal entry deleted", actor_id=profile.id)

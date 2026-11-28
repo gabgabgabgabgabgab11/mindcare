@@ -4,6 +4,7 @@ import {
   Activity,
   Check,
   ChevronRight,
+  Eye,
   EyeOff,
   FileText,
   Info,
@@ -20,11 +21,13 @@ import { getPrivacySettings, updatePrivacySettings } from '../services/studentAp
 type Settings = {
   anonymousWall: boolean;
   shareAnalytics: boolean;
+  journalInsights: boolean;
 };
 
 const DEFAULT_SETTINGS: Settings = {
   anonymousWall: true,
   shareAnalytics: false,
+  journalInsights: false,
 };
 
 const PRIVACY_CONTROLS: {
@@ -53,6 +56,15 @@ const PRIVACY_CONTROLS: {
     disabledStatus: 'Paused',
     note: 'When activity tracking is off, streak tracking and mood-trend summaries will not update.',
   },
+  {
+    key: 'journalInsights',
+    title: 'Journal Reflection Insights',
+    description: 'Optional sentiment analysis of new journal entries that may show a general emotional-tone insight after saving. This is not a diagnosis.',
+    Icon: Eye,
+    enabledStatus: 'On',
+    disabledStatus: 'Off by default',
+    note: 'When off, new entries are not analyzed for sentiment and insight results are hidden and excluded from wellness-priority indicators. Previously generated sentiment labels may remain stored but are not shown or used.',
+  },
 ];
 
 const LEGAL_DOCUMENTS = {
@@ -66,7 +78,7 @@ const LEGAL_DOCUMENTS = {
       },
       {
         title: 'Private journals',
-        text: 'Private journal entries are encrypted and are not visible to other students. Journal content may be processed by MindCare features to provide the services you use. Authorized access follows system roles and applicable campus confidentiality requirements.',
+        text: 'Private journal entries are encrypted and are not visible to other students. Automated sentiment insights are off by default and run only when enabled in Privacy Settings. When off, new entries are not analyzed and previously generated sentiment labels are not shown or used for wellness-priority indicators, though those labels may remain stored. Authorized access follows system roles and applicable campus confidentiality requirements.',
       },
       {
         title: 'Screenings are not diagnoses',
@@ -136,6 +148,7 @@ export const PrivacySettings = () => {
         const loadedSettings = {
           anonymousWall: data.anonymize_activity,
           shareAnalytics: data.allow_activity_tracking,
+          journalInsights: data.journal_insights_enabled,
         };
         setSettings(loadedSettings);
         setSavedSettings(loadedSettings);
@@ -146,7 +159,8 @@ export const PrivacySettings = () => {
 
   const hasUnsavedChanges =
     settings.anonymousWall !== savedSettings.anonymousWall ||
-    settings.shareAnalytics !== savedSettings.shareAnalytics;
+    settings.shareAnalytics !== savedSettings.shareAnalytics ||
+    settings.journalInsights !== savedSettings.journalInsights;
 
   const handleToggle = (key: keyof Settings) => {
     setSettings((current) => ({ ...current, [key]: !current[key] }));
@@ -167,6 +181,7 @@ export const PrivacySettings = () => {
       await updatePrivacySettings({
         allow_activity_tracking: preferencesToSave.shareAnalytics,
         anonymize_activity: preferencesToSave.anonymousWall,
+        journal_insights_enabled: preferencesToSave.journalInsights,
       });
       setSavedSettings(preferencesToSave);
       setShowSuccess(true);

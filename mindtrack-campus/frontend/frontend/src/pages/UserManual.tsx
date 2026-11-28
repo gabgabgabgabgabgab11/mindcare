@@ -24,7 +24,7 @@ const topics = [
   { id: 'journal', title: 'Write a reflective journal', intro: 'Give your thoughts a little room.', steps: [
     'Open the journal and write your reflection in the entry box.',
     'Choose the save action, read the privacy notice, and confirm if you wish to save the entry.',
-    'Wait for the save result. You may see a reflection insight; these automated insights are not diagnoses.',
+    'Wait for the save result. Journal Reflection Insights are off by default. If you enable them in Privacy Settings, you may see an automated reflection insight after saving; it is not a diagnosis.',
     'Find saved reflections in your past entries. If saving fails, keep a copy of your text and retry once your connection is stable.',
   ] },
   { id: 'screenings', title: 'Complete a wellness screening', intro: 'PHQ-9 and GAD-7 support reflection on your wellbeing.', steps: [

@@ -21,6 +21,7 @@ def get_privacy_settings(
     return PrivacySettingsResponse(
         allow_activity_tracking=settings.allow_activity_tracking,
         anonymize_activity=settings.anonymize_activity,
+        journal_insights_enabled=settings.journal_insights_enabled,
         updated_at=settings.updated_at,
     )
 
@@ -32,14 +33,23 @@ def put_privacy_settings(
     db: Session = Depends(get_db),
 ):
     settings = update_privacy_settings(
-        db, profile.id, payload.allow_activity_tracking, payload.anonymize_activity
+        db,
+        profile.id,
+        payload.allow_activity_tracking,
+        payload.anonymize_activity,
+        payload.journal_insights_enabled,
     )
     log_event(
         db, "privacy_setting_changed", "Privacy settings updated", actor_id=profile.id,
-        metadata={"allow_activity_tracking": settings.allow_activity_tracking, "anonymize_activity": settings.anonymize_activity},
+        metadata={
+            "allow_activity_tracking": settings.allow_activity_tracking,
+            "anonymize_activity": settings.anonymize_activity,
+            "journal_insights_enabled": settings.journal_insights_enabled,
+        },
     )
     return PrivacySettingsResponse(
         allow_activity_tracking=settings.allow_activity_tracking,
         anonymize_activity=settings.anonymize_activity,
+        journal_insights_enabled=settings.journal_insights_enabled,
         updated_at=settings.updated_at,
     )

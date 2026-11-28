@@ -451,14 +451,19 @@ export const StudentDashboard = () => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </div>
                 <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Reflect on your mood and emotional well-being over the past two weeks</h3>
-                <p className="text-xs text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">PHQ-9 Screening</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">The Patient Health Questionnaire-9 is a nine-question screening about depression symptoms over the past two weeks. It can support reflection, but it does not diagnose depression.</p>
               </div>
-              <button 
-                onClick={() => navigate('/assessments', { state: { type: 'PHQ-9' } })}
-                className="flex items-center gap-2 text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 transition-colors uppercase tracking-wider"
-              >
-                Start Check <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-              </button>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <button
+                  onClick={() => navigate('/assessments', { state: { type: 'PHQ-9' } })}
+                  className="flex items-center gap-2 text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 transition-colors uppercase tracking-wider"
+                >
+                  Start Check <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+                <button type="button" onClick={() => navigate('/resources')} className="text-xs font-bold text-slate-600 hover:text-brand-700 dark:text-slate-300 dark:hover:text-brand-300 transition-colors">
+                  Learn about PHQ-9
+                </button>
+              </div>
             </Card>
 
             {/* GAD-7 Card */}
@@ -468,14 +473,19 @@ export const StudentDashboard = () => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
                 <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Explore how anxiety may be affecting you and identify triggers</h3>
-                <p className="text-xs text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">GAD-7 Screening</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">The Generalized Anxiety Disorder-7 is a seven-question screening about anxiety symptoms over the past two weeks. It can support reflection, but it does not diagnose an anxiety disorder.</p>
               </div>
-              <button 
-                onClick={() => navigate('/assessments', { state: { type: 'GAD-7' } })}
-                className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors uppercase tracking-wider"
-              >
-                Start Check <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-              </button>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <button
+                  onClick={() => navigate('/assessments', { state: { type: 'GAD-7' } })}
+                  className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors uppercase tracking-wider"
+                >
+                  Start Check <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+                <button type="button" onClick={() => navigate('/resources')} className="text-xs font-bold text-slate-600 hover:text-blue-700 dark:text-slate-300 dark:hover:text-blue-300 transition-colors">
+                  Learn about GAD-7
+                </button>
+              </div>
             </Card>
 
           </div>

@@ -60,6 +60,7 @@ export interface WellnessPriorityResponse {
 export interface PrivacySettings {
   allow_activity_tracking: boolean;
   anonymize_activity: boolean;
+  journal_insights_enabled: boolean;
   updated_at: string;
   anonymize_activity_description: string;
 }
@@ -67,6 +68,7 @@ export interface PrivacySettings {
 export interface PrivacySettingsUpdateRequest {
   allow_activity_tracking: boolean;
   anonymize_activity: boolean;
+  journal_insights_enabled: boolean;
 }
 
 // consent.py

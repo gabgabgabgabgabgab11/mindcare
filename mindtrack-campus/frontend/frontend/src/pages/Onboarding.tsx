@@ -242,22 +242,24 @@ export const Onboarding = () => {
               </p>
 
               <div className="flex flex-col gap-3 mb-8">
-                <button
-                  onClick={() => navigate('/assessments', { state: { type: 'PHQ-9' } })}
-                  className="flex flex-col items-center justify-center p-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 hover:bg-brand-50/70 dark:hover:bg-brand-950/40 hover:border-brand-300 dark:hover:border-brand-500 transition-all cursor-pointer group"
-                >
-                  <span className="text-3xl mb-1.5 transition-transform group-hover:scale-110">🌙</span>
-                  <span className="font-bold text-slate-900 dark:text-white text-sm">PHQ-9</span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Mood &amp; depressive symptoms</span>
-                </button>
-                <button
-                  onClick={() => navigate('/assessments', { state: { type: 'GAD-7' } })}
-                  className="flex flex-col items-center justify-center p-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 hover:bg-brand-50/70 dark:hover:bg-brand-950/40 hover:border-brand-300 dark:hover:border-brand-500 transition-all cursor-pointer group"
-                >
-                  <span className="text-3xl mb-1.5 transition-transform group-hover:scale-110">🌀</span>
-                  <span className="font-bold text-slate-900 dark:text-white text-sm">GAD-7</span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Anxiety symptoms</span>
-                </button>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 text-center dark:border-slate-700 dark:bg-slate-800/80">
+                  <span className="mb-1.5 block text-3xl">🌙</span>
+                  <span className="block text-sm font-bold text-slate-900 dark:text-white">PHQ-9</span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-600 dark:text-slate-300">The Patient Health Questionnaire-9 is a nine-question screening about depression symptoms over the past two weeks. It can support reflection, but it does not diagnose depression.</span>
+                  <div className="mt-4 flex flex-wrap justify-center gap-4">
+                    <button type="button" onClick={() => navigate('/assessments', { state: { type: 'PHQ-9' } })} className="text-xs font-bold text-brand-700 hover:underline dark:text-brand-300">Start PHQ-9</button>
+                    <button type="button" onClick={() => navigate('/resources')} className="text-xs font-bold text-slate-600 hover:underline dark:text-slate-300">Learn about PHQ-9</button>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 text-center dark:border-slate-700 dark:bg-slate-800/80">
+                  <span className="mb-1.5 block text-3xl">🌀</span>
+                  <span className="block text-sm font-bold text-slate-900 dark:text-white">GAD-7</span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-600 dark:text-slate-300">The Generalized Anxiety Disorder-7 is a seven-question screening about anxiety symptoms over the past two weeks. It can support reflection, but it does not diagnose an anxiety disorder.</span>
+                  <div className="mt-4 flex flex-wrap justify-center gap-4">
+                    <button type="button" onClick={() => navigate('/assessments', { state: { type: 'GAD-7' } })} className="text-xs font-bold text-brand-700 hover:underline dark:text-brand-300">Start GAD-7</button>
+                    <button type="button" onClick={() => navigate('/resources')} className="text-xs font-bold text-slate-600 hover:underline dark:text-slate-300">Learn about GAD-7</button>
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-3">

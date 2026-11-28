@@ -16,11 +16,17 @@ def get_or_create_privacy_settings(db: Session, user_id: uuid.UUID) -> PrivacySe
 
 
 def update_privacy_settings(
-    db: Session, user_id: uuid.UUID, allow_activity_tracking: bool, anonymize_activity: bool
+    db: Session,
+    user_id: uuid.UUID,
+    allow_activity_tracking: bool,
+    anonymize_activity: bool,
+    journal_insights_enabled: bool | None = None,
 ) -> PrivacySettings:
     settings = get_or_create_privacy_settings(db, user_id)
     settings.allow_activity_tracking = allow_activity_tracking
     settings.anonymize_activity = anonymize_activity
+    if journal_insights_enabled is not None:
+        settings.journal_insights_enabled = journal_insights_enabled
     db.commit()
     db.refresh(settings)
     return settings
@@ -33,3 +39,8 @@ def get_deidentified_flag(db: Session, user_id: uuid.UUID) -> bool:
     this must never be left to the frontend to respect."""
     settings = db.get(PrivacySettings, user_id)
     return settings.anonymize_activity if settings else True
+
+
+def are_journal_insights_enabled(db: Session, user_id: uuid.UUID) -> bool:
+    settings = db.get(PrivacySettings, user_id)
+    return settings.journal_insights_enabled if settings else False
