@@ -24,7 +24,7 @@ import { adminCache } from '../services/adminCache';
 import type { Resource, ResourceCreateRequest } from '../types';
 
 const emptyForm: ResourceCreateRequest = {
-  category: 'on-campus',
+  category: '',
   title: '',
   description: '',
   url: '',
@@ -111,8 +111,8 @@ export const AdminResourceManagement = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.description.trim()) {
-      setError('Title and description are required.');
+    if (!form.category.trim() || !form.title.trim() || !form.description.trim()) {
+      setError('Category, title, and description are required.');
       return;
     }
 
@@ -121,7 +121,7 @@ export const AdminResourceManagement = () => {
     setSuccess(null);
     try {
       const payload: ResourceCreateRequest = {
-        category: form.category,
+        category: form.category.trim(),
         title: form.title.trim(),
         description: form.description.trim(),
         url: form.url?.trim() || null,
@@ -467,16 +467,15 @@ export const AdminResourceManagement = () => {
             <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4 text-xs">
               <div>
                 <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Resource Category</label>
-                <select
+                <input
+                  type="text"
+                  required
+                  maxLength={100}
+                  placeholder="e.g. On-Campus Counseling & Guidance"
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                >
-                  <option value="on-campus">On-Campus Counseling & Guidance</option>
-                  <option value="hotlines">Emergency Hotlines</option>
-                  <option value="self-help">Self-Help & Educational</option>
-                  <option value="external">External Health Services</option>
-                </select>
+                />
               </div>
 
               <div>
