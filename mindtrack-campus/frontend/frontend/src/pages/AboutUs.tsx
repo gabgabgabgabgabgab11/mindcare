@@ -11,7 +11,6 @@ import {
   Sparkles,
   UsersRound,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -487,47 +486,6 @@ export const AboutUs = () => {
           </div>
         </section>
 
-        {/* Validation Section with Living Aurora Background */}
-        <section aria-labelledby="validation-heading" className="about-section relative isolate overflow-hidden bg-[#0f242a] px-5 py-16 text-white sm:px-8 sm:py-20">
-          <div className="alive-orb alive-orb-2 -right-20 top-0 h-96 w-96 bg-emerald-400/30 blur-3xl" aria-hidden="true" />
-          <div className="alive-orb alive-orb-1 -left-20 bottom-0 h-80 w-80 bg-teal-400/25 blur-3xl" aria-hidden="true" />
-
-          <div className="relative mx-auto max-w-7xl">
-            <SectionHeading
-              label="TRANSPARENT ATTRIBUTION"
-              title="Validation Information"
-              description="Only the specific component and scope supplied for this project are shown. This information does not imply clinical validation or certification of the entire MindCare system."
-              id="validation-heading"
-              dark
-              bubble="Safe & transparent 🤍"
-            />
-
-            <dl className="mt-10 grid gap-5 md:grid-cols-3">
-              <div className="reveal-on-scroll delay-100">
-                <InfoItem label="COMPONENT REVIEWED">
-                  System Quality Evaluation questionnaire based on ISO/IEC 25010
-                </InfoItem>
-              </div>
-              <div className="reveal-on-scroll delay-200">
-                <InfoItem label="VALIDATOR">
-                  Mr. Marjon M. Alarcon, MIT — IT Professional Validator
-                </InfoItem>
-              </div>
-              <div className="reveal-on-scroll delay-300">
-                <InfoItem label="VALIDATION DATE">October 16, 2026</InfoItem>
-              </div>
-            </dl>
-
-            <div className="reveal-on-scroll delay-400 mt-6 flex items-start gap-4 rounded-3xl border border-white/10 bg-white/[0.07] p-6 backdrop-blur-md transition hover:bg-white/[0.09] sm:p-7">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-emerald-200">
-                <ShieldCheck className="h-6 w-6" aria-hidden="true" />
-              </div>
-              <p className="text-sm leading-7 text-slate-200 sm:text-base">
-                <strong className="font-bold text-white">Mental Wellness Disclaimer:</strong> MindCare is a non-diagnostic mental wellness support tool. It does not replace professional counseling, therapy, medical advice, or treatment. Users are encouraged to seek qualified professional assistance when needed.
-              </p>
-            </div>
-          </div>
-        </section>
       </main>
 
       {/* Footer */}
@@ -581,11 +539,3 @@ function SectionHeading({
   );
 }
 
-function InfoItem({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/4 p-6 transition hover:bg-white/[0.07] dark:border-white/10 dark:bg-white/4">
-      <dt className="text-[10px] font-extrabold tracking-[0.16em] text-emerald-300">{label}</dt>
-      <dd className="mt-3 text-sm font-semibold leading-6 text-white">{children}</dd>
-    </div>
-  );
-}

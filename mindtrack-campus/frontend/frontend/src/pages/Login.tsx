@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
 import { Button } from '../components/Button';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { TermsModal } from '../components/TermsModal';
 import { clearFailedLogins, getLoginCooldownMs, recordFailedLogin } from '../utils/loginAttemptLimiter';
 import { ForgotPasswordModal } from '../components/ForgotPasswordModal';
 import { DevPatchNotes } from '../components/DevPatchNotes';
@@ -22,6 +23,8 @@ export const Login = () => {
   const [cooldownMs, setCooldownMs] = useState(() => getLoginCooldownMs());
   const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [hasAgreed, setHasAgreed] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [inactivityMessage] = useState(consumeInactivityNotice);
   const registrationMessage = (location.state as { message?: string } | null)?.message ?? inactivityMessage;
 
@@ -46,6 +49,10 @@ export const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!hasAgreed) {
+      setError('Please agree to the Terms & Conditions and Privacy Policy to sign in.');
+      return;
+    }
     const remainingCooldown = getLoginCooldownMs();
     if (remainingCooldown) {
       setCooldownMs(remainingCooldown);
@@ -147,8 +154,32 @@ export const Login = () => {
               </div>
             </div>
 
+            <label className="flex items-start gap-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
+              <input
+                type="checkbox"
+                checked={hasAgreed}
+                onChange={(event) => setHasAgreed(event.target.checked)}
+                className="mt-1 h-4 w-4 rounded accent-brand-600"
+              />
+              <span>
+                I have read and agree to the{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsTermsOpen(true)}
+                  className="font-bold text-brand-600 dark:text-brand-400 hover:underline"
+                >
+                  Terms &amp; Conditions
+                </button>{' '}
+                and{' '}
+                <Link to="/privacy-policy" className="font-bold text-brand-600 dark:text-brand-400 hover:underline">
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+
             {cooldownMs > 0 && <p className="text-center text-xs font-semibold text-amber-700 dark:text-amber-300">Sign-in is temporarily paused for {Math.ceil(cooldownMs / 60_000)} minute(s).</p>}
-            <Button type="submit" variant="primary" disabled={cooldownMs > 0} className="w-full bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl py-3.5 mt-2 shadow-lg shadow-brand-600/25 border-none text-sm font-semibold transition-all cursor-pointer" isLoading={isSubmitting}>
+            <Button type="submit" variant="primary" disabled={!hasAgreed || cooldownMs > 0} className="w-full bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl py-3.5 mt-2 shadow-lg shadow-brand-600/25 border-none text-sm font-semibold transition-all cursor-pointer" isLoading={isSubmitting}>
               Sign In to Portal
             </Button>
           </form>}
@@ -222,6 +253,14 @@ export const Login = () => {
       </div>
 
       <ForgotPasswordModal isOpen={isForgotOpen} onClose={() => setIsForgotOpen(false)} />
+      <TermsModal
+        isOpen={isTermsOpen}
+        onClose={() => setIsTermsOpen(false)}
+        onAgree={() => {
+          setHasAgreed(true);
+          setIsTermsOpen(false);
+        }}
+      />
     </div>
   );
 };

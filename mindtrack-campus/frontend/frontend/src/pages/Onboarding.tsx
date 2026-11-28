@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { MOOD_OPTIONS } from '../constants/mood';
-import { listJournalEntries, listWellnessCheckIns, signConsent, submitWellnessCheckIn, updateProfile } from '../services/studentApi';
-import { YEAR_LEVEL_OPTIONS } from '../constants/academicYears';
+import { listJournalEntries, listWellnessCheckIns, signConsent, submitWellnessCheckIn } from '../services/studentApi';
 import { studentCache } from '../services/studentCache';
 import { getActivityStreak, queueStreakCelebration } from '../utils/activityStreak';
 import { useAuth } from '../contexts/useAuth';
@@ -19,7 +18,7 @@ export const Onboarding = () => {
   const [step, setStep] = useState<number>(() => (hasActiveConsent === true ? 4 : 1));
   const [isFading, setIsFading] = useState(false);
   const [isSavingConsent, setIsSavingConsent] = useState(false);
-  const [yearLevel, setYearLevel] = useState('');
+  const [hasConsented, setHasConsented] = useState(false);
   const [isSavingMood, setIsSavingMood] = useState(false);
   const [selectedMoodScore, setSelectedMoodScore] = useState<MoodScore | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,14 +39,6 @@ export const Onboarding = () => {
       checkedConsentRef.current = true;
       setIsSavingConsent(true);
       try {
-        if (yearLevel) {
-          const updated = await updateProfile({ year_level: Number(yearLevel) });
-          if (studentCache.dashboard) {
-            studentCache.dashboard.user = {
-              ...studentCache.dashboard.user, year_level: updated.year_level, section: updated.section,
-            };
-          }
-        }
         await signConsent();
       } catch {
         setError('We could not save your setup and consent. Please try again.');
@@ -117,8 +108,8 @@ export const Onboarding = () => {
     {
       icon: '🔒',
       title: 'Your privacy matters',
-      text: 'Everything you share here is confidential and encrypted. MindCare is not a diagnostic tool. It will never label you or share your personal responses without your consent.',
-      button: 'Get started',
+      text: 'Before using MindCare’s wellness features, please review this consent. MindCare stores and processes the information you submit for check-ins, journaling, screenings, and related support features. MindCare is not a diagnostic tool. You may withdraw consent later in Privacy Settings; some features require active consent.',
+      button: 'I consent and continue',
     },
   ];
 
@@ -144,14 +135,19 @@ export const Onboarding = () => {
             <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-10">{screens[step - 1].text}</p>
 
             {step === 3 && (
-              <div className="mb-6 w-full text-left">
-                <label htmlFor="onboarding-year-level" className="text-sm font-bold text-slate-700 dark:text-slate-200">Year level <span className="font-normal text-slate-500">(optional)</span></label>
-                <select id="onboarding-year-level" value={yearLevel} onChange={event => setYearLevel(event.target.value)} disabled={isSavingConsent} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-                  <option value="">Choose year level</option>
-                  {YEAR_LEVEL_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-                <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">You can update your program and year level later in Profile.</p>
-              </div>
+              <label className="mb-6 flex w-full items-start gap-3 text-left text-sm leading-6 text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={hasConsented}
+                  onChange={event => setHasConsented(event.target.checked)}
+                  disabled={isSavingConsent}
+                  className="mt-1 h-4 w-4 shrink-0 rounded accent-brand-600"
+                />
+                <span>
+                  I have read this information and consent to MindCare storing and processing the information I submit to provide its wellness features. See the{' '}
+                  <Link to="/privacy-policy" className="font-bold text-brand-600 underline dark:text-brand-400">Privacy Policy</Link>.
+                </span>
+              </label>
             )}
 
             {/* Pagination Dots */}
@@ -170,7 +166,7 @@ export const Onboarding = () => {
               onClick={handleNext}
               variant="primary"
               isLoading={isSavingConsent}
-              disabled={isSavingConsent}
+              disabled={isSavingConsent || (step === 3 && !hasConsented)}
               className="bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl px-12 py-3.5 shadow-lg shadow-brand-600/25 border-none text-sm font-semibold transition-all cursor-pointer"
             >
               {isSavingConsent ? 'Saving Consent...' : screens[step - 1].button}
