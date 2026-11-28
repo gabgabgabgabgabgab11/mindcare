@@ -106,12 +106,14 @@ export const ProductTour = ({ page, userId, replayRequest }: ProductTourProps) =
 
   // The Help button removes the current page's flag and starts it again immediately.
   useEffect(() => {
-    if (!page || !userId || !storageKey || !replayRequest || replayRequest.page !== page || replayRequest.id === handledReplayId.current) return;
+    if (!page || !replayRequest || replayRequest.page !== page || replayRequest.id === handledReplayId.current) return;
     handledReplayId.current = replayRequest.id;
-    try {
-      window.localStorage.removeItem(storageKey);
-    } catch {
-      // Replay still works for the current visit when browser storage is disabled.
+    if (storageKey) {
+      try {
+        window.localStorage.removeItem(storageKey);
+      } catch {
+        // Replay still works for the current visit when browser storage is disabled.
+      }
     }
     setStepIndex(0);
     setLayout(null);
@@ -208,7 +210,7 @@ export const ProductTour = ({ page, userId, replayRequest }: ProductTourProps) =
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [advanceStep, finishTour, isOpen]);
 
-  if (!isOpen || !layout || !page || !userId) return null;
+  if (!isOpen || !layout || !page) return null;
 
   const step = steps[stepIndex];
   const spotlight = {
