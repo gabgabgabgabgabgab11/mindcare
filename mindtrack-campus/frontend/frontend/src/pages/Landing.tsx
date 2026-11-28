@@ -49,12 +49,12 @@ export const Landing = () => {
             <div className="hero-fade-1">
               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white/80 px-4 py-2 text-xs font-bold text-emerald-800 shadow-sm dark:border-emerald-900 dark:bg-slate-900/80 dark:text-emerald-200">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-                A gentle space for student wellness
+                A gentle space for student mental wellbeing
               </span>
             </div>
 
             <h1 className="hero-fade-2 mt-7 max-w-3xl text-5xl font-black leading-[1.02] tracking-tight text-slate-950 sm:text-6xl lg:text-7xl dark:text-white">
-              Your wellbeing<br />
+              Your mental wellbeing<br />
               <span className="text-emerald-600 dark:text-emerald-400">deserves a pause.</span>
             </h1>
 
@@ -71,16 +71,6 @@ export const Landing = () => {
               </a>
             </div>
 
-            <div className="hero-fade-5 mt-10 flex justify-center gap-6 text-left lg:justify-start">
-              <div>
-                <strong className="block text-xl text-emerald-700 dark:text-emerald-300">Private</strong>
-                <span className="text-xs text-slate-500 dark:text-slate-400">Your space, your pace</span>
-              </div>
-              <div className="border-l border-emerald-200 pl-6 dark:border-slate-700">
-                <strong className="block text-xl text-emerald-700 dark:text-emerald-300">Supportive</strong>
-                <span className="text-xs text-slate-500 dark:text-slate-400">Here when needed</span>
-              </div>
-            </div>
           </div>
 
           {/* Right Column: Hero Scene with Pet Friends & Default Capybara Sitting in its Card */}

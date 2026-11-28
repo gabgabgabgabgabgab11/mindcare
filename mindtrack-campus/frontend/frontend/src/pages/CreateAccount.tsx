@@ -49,9 +49,7 @@ export const CreateAccount = () => {
         setError('Registration could not be confirmed. Check your inbox or try signing in before creating another account.');
         return;
       }
-      navigate('/login', { state: { message: data.session
-        ? 'Account ready. Loading your account…'
-        : 'Check your email (including spam) for a confirmation link if verification is required, then sign in. If you already have an account, sign in or reset your password.' } });
+      navigate('/login', { state: { message: 'Check your email to verify your account.' } });
     } catch (signUpError) {
       setError(describeSignupError(signUpError));
     } finally {
