@@ -679,14 +679,12 @@ export const Journal = () => {
         <div className="mt-5 border-t border-amber-200/80 pt-4 dark:border-slate-700">
           <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-200">Decorate your page</p>
           <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
-            <Button type="button" variant="secondary" onClick={() => setShowStickerPicker((show) => !show)} className="rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"><Sticker className="mr-1.5 h-4 w-4" />Sticker</Button>
-            {showStickerPicker && <div className="absolute bottom-full left-0 z-50 mb-2 grid grid-cols-6 gap-1 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">{STICKERS.map((sticker) => <button key={sticker} type="button" onClick={() => addDecoration('sticker', sticker)} className="rounded-lg p-2 text-xl hover:bg-emerald-50 dark:hover:bg-slate-800">{sticker}</button>)}</div>}
-          </div>
+          <Button type="button" variant="secondary" onClick={() => setShowStickerPicker((show) => !show)} aria-expanded={showStickerPicker} aria-controls="journal-sticker-picker" className="rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"><Sticker className="mr-1.5 h-4 w-4" />Sticker</Button>
           <Button type="button" variant="secondary" disabled={isAddingPhoto} onMouseDown={rememberEditorSelection} onTouchStart={rememberEditorSelection} onClick={() => photoInput.current?.click()} className="rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"><ImagePlus className="mr-1.5 h-4 w-4" />{isAddingPhoto ? 'Adding…' : 'Add image/GIF'}</Button>
           <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(event) => void handlePhoto(event)} />
           <Button type="button" variant="secondary" title="Add a decorative tape strip to this page" onClick={() => addDecoration('washi', ['sage', 'rose', 'lavender'][decorations.filter((item) => item.kind === 'washi').length % 3])} className="rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"><Sparkles className="mr-1.5 h-4 w-4" />Add tape</Button>
           </div>
+          {showStickerPicker && <div id="journal-sticker-picker" className="mt-3 grid w-fit max-w-full grid-cols-4 gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900 sm:grid-cols-6">{STICKERS.map((sticker) => <button key={sticker} type="button" onClick={() => addDecoration('sticker', sticker)} aria-label={`Add ${sticker} sticker`} className="flex h-11 w-11 items-center justify-center rounded-xl text-2xl hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:hover:bg-slate-800">{sticker}</button>)}</div>}
         </div>
 
         <div className="mt-5 flex flex-col gap-3 border-t border-amber-200/70 pt-4 dark:border-slate-700 sm:flex-row sm:items-center sm:justify-between">
