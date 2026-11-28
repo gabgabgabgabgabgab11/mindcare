@@ -810,6 +810,8 @@ export const AdminAnalytics = () => {
                       <Tooltip
                         formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Share of completed screenings']}
                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
+                        itemStyle={{ color: '#fff' }}
+                        labelStyle={{ color: '#fff', fontWeight: 700 }}
                       />
                       <Bar dataKey="percentage" name="Students (% of completed assessments)" radius={[4, 4, 0, 0]}>
                         {phq9DistData.map((entry, index) => (
@@ -852,6 +854,8 @@ export const AdminAnalytics = () => {
                       <Tooltip
                         formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Share of completed screenings']}
                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
+                        itemStyle={{ color: '#fff' }}
+                        labelStyle={{ color: '#fff', fontWeight: 700 }}
                       />
                       <Bar dataKey="percentage" name="Students (% of completed assessments)" radius={[4, 4, 0, 0]}>
                         {gad7DistData.map((entry, index) => (
@@ -903,6 +907,8 @@ export const AdminAnalytics = () => {
                       <Tooltip
                         formatter={(value, name) => [`${Number(value).toFixed(1)}% of highest score`, name]}
                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
+                        itemStyle={{ color: '#fff' }}
+                        labelStyle={{ color: '#fff', fontWeight: 700 }}
                       />
                       <Legend wrapperStyle={{ fontSize: '10px' }} />
                       <Bar dataKey="phq_percentage" name="PHQ-9 average" fill="#306c64" radius={[3, 3, 0, 0]}>
@@ -976,6 +982,8 @@ export const AdminAnalytics = () => {
                       <Tooltip
                         formatter={(value, name) => [`${Number(value).toFixed(1)}% of highest score`, name]}
                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
+                        itemStyle={{ color: '#fff' }}
+                        labelStyle={{ color: '#fff', fontWeight: 700 }}
                       />
                       <Legend wrapperStyle={{ fontSize: '10px' }} />
                       <Bar dataKey="phq_percentage" name="PHQ-9 average" fill="#306c64" radius={[3, 3, 0, 0]}>
@@ -1102,6 +1110,8 @@ export const AdminAnalytics = () => {
                   />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
+                    itemStyle={{ color: '#fff' }}
+                    labelStyle={{ color: '#fff', fontWeight: 700 }}
                   />
                   <Legend wrapperStyle={{ fontSize: '10px' }} />
                   <Line
