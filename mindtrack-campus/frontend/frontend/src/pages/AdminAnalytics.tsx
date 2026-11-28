@@ -24,6 +24,7 @@ import {
   Tooltip,
   CartesianGrid,
   Legend,
+  LabelList,
 } from 'recharts';
 import { Card } from '../components/Card';
 import { downloadWellnessPdfReport } from '../utils/wellnessReport';
@@ -67,10 +68,9 @@ const SEMESTERS = [
 ];
 const DATE_RANGES = [
   { value: 'all', label: 'All Time' },
-  { value: '7d', label: 'Last 7 Days' },
   { value: '30d', label: 'Last 30 Days' },
   { value: '90d', label: 'Last 90 Days' },
-  { value: 'custom', label: 'Custom Range' },
+  { value: 'custom', label: 'Custom Dates' },
 ];
 
 const PHQ9_SEVERITY_COLORS: Record<string, string> = {
@@ -109,10 +109,10 @@ function buildApiFilters(filters: WellnessAnalyticsFilters): Partial<WellnessAna
   if (filters.program) base.program = filters.program;
   if (filters.year_level) base.year_level = filters.year_level;
   if (filters.section) base.section = filters.section;
-  if (filters.academic_year) base.academic_year = filters.academic_year;
-  if (filters.semester && filters.semester !== 'all') base.semester = filters.semester;
-
-  if (filters.date_range === 'custom') {
+  if (filters.academic_year) {
+    base.academic_year = filters.academic_year;
+    if (filters.semester && filters.semester !== 'all') base.semester = filters.semester;
+  } else if (filters.date_range === 'custom') {
     if (filters.start_date) base.start_date = filters.start_date;
     if (filters.end_date) base.end_date = filters.end_date;
   } else {
@@ -241,19 +241,36 @@ interface KpiCardProps {
   sub?: string;
   icon: React.ReactNode;
   accent?: string;
+  onClick?: () => void;
+  actionLabel?: string;
 }
 
-function KpiCard({ label, value, sub, icon, accent = 'text-brand-600 dark:text-brand-400' }: KpiCardProps) {
-  return (
-    <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col gap-1">
-      <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-        <span className="text-[11px] font-medium uppercase tracking-wider">{label}</span>
-        <div className={accent}>{icon}</div>
-      </div>
-      <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{value}</div>
-      {sub && <div className="text-[11px] text-slate-400 dark:text-slate-500">{sub}</div>}
+function KpiCard({ label, value, sub, icon, accent = 'text-brand-600 dark:text-brand-400', onClick, actionLabel }: KpiCardProps) {
+  const content = <>
+    <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+      <span className="text-[11px] font-medium uppercase tracking-wider">{label}</span>
+      <div className={accent}>{icon}</div>
     </div>
+    <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{value}</div>
+    {sub && <div className="text-[11px] text-slate-500 dark:text-slate-400">{sub}</div>}
+    {actionLabel && <div className="mt-2 text-[10px] font-bold text-brand-700 dark:text-brand-300">{actionLabel} <span aria-hidden="true">→</span></div>}
+  </>;
+  return (
+    onClick ? <button type="button" onClick={onClick} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col gap-1 text-left transition hover:border-brand-300 dark:hover:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40">{content}</button>
+      : <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col gap-1">{content}</div>
   );
+}
+
+function DistributionBarLabel(props: { x?: string | number; y?: string | number; width?: string | number; height?: string | number; value?: unknown; payload?: { percentage: number; count: number } }) {
+  const { x = 0, y = 0, width = 0, height = 0, payload } = props;
+  const labelX = Number(x);
+  const labelY = Number(y);
+  const labelWidth = Number(width);
+  const labelHeight = Number(height);
+  if (!payload || labelHeight < 22 || labelWidth < 36) return null;
+  return <text x={labelX + labelWidth / 2} y={labelY + labelHeight / 2 + 3} textAnchor="middle" fill="#fff" fontSize={10} fontWeight={700}>
+    {`${payload.percentage.toFixed(0)}% · ${payload.count}`}
+  </text>;
 }
 
 function CohortHiddenBanner({ minSize }: { minSize: number }) {
@@ -346,6 +363,9 @@ export const AdminAnalytics = () => {
   // ─ Filter handlers ────────────────────────────────────────────────────────
   const handleApplyFilters = () => {
     setActiveFilters({ ...pendingFilters });
+    if (pendingFilters.section) {
+      window.setTimeout(() => scrollToAnalytics('section-comparison'), 0);
+    }
   };
 
   const handleReset = () => {
@@ -360,13 +380,31 @@ export const AdminAnalytics = () => {
       // Clear dependent filters
       if (key === 'program') next.section = '';
       if (key === 'year_level') next.section = '';
+      if (key === 'academic_year' && value) {
+        next.date_range = 'all';
+        next.start_date = '';
+        next.end_date = '';
+      }
+      if (key === 'semester' && value !== 'all' && next.academic_year) {
+        next.date_range = 'all';
+        next.start_date = '';
+        next.end_date = '';
+      }
       if (key === 'date_range') {
         setShowCustomDates(value === 'custom');
         next.start_date = '';
         next.end_date = '';
+        if (value !== 'all') {
+          next.academic_year = '';
+          next.semester = 'all';
+        }
       }
       return next;
     });
+  };
+
+  const scrollToAnalytics = (sectionId: string) => {
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   // ─ Chart data ─────────────────────────────────────────────────────────────
@@ -376,6 +414,7 @@ export const AdminAnalytics = () => {
         .map(([band, count]) => ({
           band: band.replace(/_/g, ' '),
           count,
+          percentage: screening.sample_size > 0 ? (count / screening.sample_size) * 100 : 0,
           fill: PHQ9_SEVERITY_COLORS[band] ?? '#94a3b8',
         }))
     : [];
@@ -386,6 +425,7 @@ export const AdminAnalytics = () => {
         .map(([band, count]) => ({
           band: band.replace(/_/g, ' '),
           count,
+          percentage: screening.sample_size > 0 ? (count / screening.sample_size) * 100 : 0,
           fill: GAD7_SEVERITY_COLORS[band] ?? '#94a3b8',
         }))
     : [];
@@ -394,6 +434,7 @@ export const AdminAnalytics = () => {
 
   // ─ Render ─────────────────────────────────────────────────────────────────
   const hasSection = !!(activeFilters.program && activeFilters.year_level);
+  const showSectionComparison = hasSection && !!activeFilters.section;
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -484,7 +525,7 @@ export const AdminAnalytics = () => {
           <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Filters</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {/* Academic Year */}
           <div className="flex flex-col gap-1">
             <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">Academic Year</label>
@@ -538,31 +579,30 @@ export const AdminAnalytics = () => {
             </select>
           </div>
 
-          {/* Section */}
+          {/* Period: use either academic year/semester or calendar dates. */}
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">Section</label>
-            <select
-              value={pendingFilters.section}
-              onChange={(e) => updatePending('section', e.target.value)}
-              disabled={!pendingFilters.program && !pendingFilters.year_level}
-              className="px-2 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
-            >
-              <option value="">All Sections</option>
-              {filterOptions.sections.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-
-          {/* Date Range */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">Date Range</label>
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">Recent period</label>
             <select
               value={pendingFilters.date_range}
               onChange={(e) => updatePending('date_range', e.target.value)}
+              disabled={!!pendingFilters.academic_year}
               className="px-2 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               {DATE_RANGES.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
             </select>
           </div>
+
+          {pendingFilters.program && pendingFilters.year_level && <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">Section</label>
+            <select
+              value={pendingFilters.section}
+              onChange={(e) => updatePending('section', e.target.value)}
+              className="px-2 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            >
+              <option value="">All Sections</option>
+              {filterOptions.sections.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>}
         </div>
 
         {/* Custom date inputs */}
@@ -643,35 +683,41 @@ export const AdminAnalytics = () => {
             <KpiCard
               label="Total Students"
               value={overview?.total_students ?? '—'}
-              sub="Matching selected filters"
+              sub="Students in this reporting scope"
               icon={<Users className="w-4 h-4" />}
               accent="text-brand-600 dark:text-brand-400"
             />
             <KpiCard
               label="Assessments"
               value={overview?.assessment_count ?? '—'}
-              sub={`Participation: ${formatRate(overview?.assessment_participation_rate ?? null)}`}
+              sub={`${formatRate(overview?.assessment_participation_rate ?? null)} of students · screening mix below`}
               icon={<ClipboardList className="w-4 h-4" />}
               accent="text-emerald-600 dark:text-emerald-400"
+              onClick={() => scrollToAnalytics('screening-distribution')}
+              actionLabel="View screening results"
             />
             <KpiCard
               label="Check-ins"
               value={overview?.checkin_count ?? '—'}
-              sub={`Participation: ${formatRate(overview?.checkin_participation_rate ?? null)}`}
+              sub={`${formatRate(overview?.checkin_participation_rate ?? null)} of students recorded a check-in`}
               icon={<Heart className="w-4 h-4" />}
               accent="text-rose-500 dark:text-rose-400"
+              onClick={() => scrollToAnalytics('wellness-trends')}
+              actionLabel="Review activity trend"
             />
             <KpiCard
               label="Journal Entries"
               value={overview?.journal_count ?? '—'}
-              sub={`Participation: ${formatRate(overview?.journal_participation_rate ?? null)}`}
+              sub={`${formatRate(overview?.journal_participation_rate ?? null)} of students wrote an entry`}
               icon={<BookMarked className="w-4 h-4" />}
               accent="text-brand-600 dark:text-brand-400"
+              onClick={() => scrollToAnalytics('wellness-trends')}
+              actionLabel="Review activity trend"
             />
             <KpiCard
               label="Follow-up Flags"
               value={overview?.follow_up_flags ?? '—'}
-              sub="Escalated assessments"
+              sub="Aggregate count; use support protocols for follow-up"
               icon={<AlertTriangle className="w-4 h-4" />}
               accent="text-amber-500 dark:text-amber-400"
             />
@@ -680,7 +726,7 @@ export const AdminAnalytics = () => {
       </div>
 
       {/* ── Screening Score Overview ── */}
-      <div>
+      <div id="screening-distribution" className="scroll-mt-6">
         <h2 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
           Screening Score Overview
         </h2>
@@ -710,7 +756,7 @@ export const AdminAnalytics = () => {
                 {formatAvg(screening?.average_phq9 ?? null)}
               </div>
               <div className="text-[11px] text-slate-400 dark:text-slate-500">
-                Based on {screening?.sample_size ?? 0} completed assessments
+                {screening?.sample_size ?? 0} completed assessments · bars show percent and count by score band
               </div>
 
               {phq9DistData.length > 0 && (
@@ -719,14 +765,15 @@ export const AdminAnalytics = () => {
                     <BarChart data={phq9DistData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
                       <CartesianGrid stroke="#334155" opacity={0.15} vertical={false} />
                       <XAxis dataKey="band" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
                       />
-                      <Bar dataKey="count" name="Students" radius={[4, 4, 0, 0]}>
+                      <Bar dataKey="percentage" name="Students (% of completed assessments)" radius={[4, 4, 0, 0]}>
                         {phq9DistData.map((entry, index) => (
                           <rect key={index} fill={entry.fill} />
                         ))}
+                        <LabelList dataKey="percentage" content={DistributionBarLabel} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -750,7 +797,7 @@ export const AdminAnalytics = () => {
                 {formatAvg(screening?.average_gad7 ?? null)}
               </div>
               <div className="text-[11px] text-slate-400 dark:text-slate-500">
-                Based on {screening?.sample_size ?? 0} completed assessments
+                {screening?.sample_size ?? 0} completed assessments · bars show percent and count by score band
               </div>
 
               {gad7DistData.length > 0 && (
@@ -759,14 +806,15 @@ export const AdminAnalytics = () => {
                     <BarChart data={gad7DistData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
                       <CartesianGrid stroke="#334155" opacity={0.15} vertical={false} />
                       <XAxis dataKey="band" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
                       />
-                      <Bar dataKey="count" name="Students" radius={[4, 4, 0, 0]}>
+                      <Bar dataKey="percentage" name="Students (% of completed assessments)" radius={[4, 4, 0, 0]}>
                         {gad7DistData.map((entry, index) => (
                           <rect key={index} fill={entry.fill} />
                         ))}
+                        <LabelList dataKey="percentage" content={DistributionBarLabel} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -778,7 +826,7 @@ export const AdminAnalytics = () => {
       </div>
 
       {/* ── Metrics by Group ── */}
-      <div>
+      <div id="group-comparisons" className="scroll-mt-6">
         <h2 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
           Metrics by Group
         </h2>
@@ -790,7 +838,7 @@ export const AdminAnalytics = () => {
               Average Scores by Program
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
-              Groups listed alphabetically — not ranked by wellness status.
+              Average screening scores (0–27 PHQ-9 and 0–21 GAD-7); descriptive only, not a group ranking.
             </p>
             {isLoading ? (
               <SkeletonChart />
@@ -858,7 +906,7 @@ export const AdminAnalytics = () => {
               Average Scores by Year Level
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
-              Values shown are descriptive aggregates only.
+              Average screening scores (0–27 PHQ-9 and 0–21 GAD-7); descriptive only, not a group ranking.
             </p>
             {isLoading ? (
               <SkeletonChart />
@@ -914,8 +962,8 @@ export const AdminAnalytics = () => {
         </div>
 
         {/* By Section — only shown when program + year are selected */}
-        {hasSection && (
-          <Card className="mt-4 p-5 border border-slate-200 dark:border-slate-800 shadow-none bg-white dark:bg-slate-900">
+        {showSectionComparison && (
+          <Card id="section-comparison" className="mt-4 scroll-mt-6 p-5 border border-slate-200 dark:border-slate-800 shadow-none bg-white dark:bg-slate-900">
             <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
               Average Scores by Section
             </h3>
@@ -964,7 +1012,7 @@ export const AdminAnalytics = () => {
       </div>
 
       {/* ── Historical Trends ── */}
-      <div>
+      <div id="wellness-trends" className="scroll-mt-6">
         <h2 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
           Wellness Trends
         </h2>
