@@ -157,17 +157,17 @@ function exportCsv(
   lines.push('Institution,Polytechnic University of the Philippines – Santa Maria Campus');
   lines.push(`Generated At,${now}`);
   lines.push(`Scope,"${scopeLabel(activeFilters)}"`);
-  lines.push(`Classification,Aggregate / Administrative Use Only`);
+  lines.push(`Report Type,Group summaries for administrative use`);
   lines.push('');
   lines.push('=== OVERVIEW ===');
   if (overview) {
     lines.push(`Total Students,${overview.total_students}`);
     lines.push(`Assessment Count,${overview.assessment_count}`);
-    lines.push(`Assessment Participation,${formatRate(overview.assessment_participation_rate)}`);
+    lines.push(`Students who completed a screening,${formatRate(overview.assessment_participation_rate)}`);
     lines.push(`Check-in Count,${overview.checkin_count}`);
-    lines.push(`Check-in Participation,${formatRate(overview.checkin_participation_rate)}`);
+    lines.push(`Students who checked in,${formatRate(overview.checkin_participation_rate)}`);
     lines.push(`Journal Count,${overview.journal_count}`);
-    lines.push(`Journal Participation,${formatRate(overview.journal_participation_rate)}`);
+    lines.push(`Students who wrote a journal entry,${formatRate(overview.journal_participation_rate)}`);
     lines.push(`Follow-up Flags,${overview.follow_up_flags}`);
   }
   lines.push('');
@@ -185,7 +185,7 @@ function exportCsv(
     lines.push('Band,Count');
     Object.entries(screening.gad7_distribution).forEach(([k, v]) => lines.push(`${k},${v}`));
   } else {
-    lines.push('Wellness scores withheld (cohort size below privacy threshold)');
+    lines.push('Wellness scores hidden to protect student privacy (group is too small)');
   }
   lines.push('');
   lines.push('=== BY PROGRAM ===');
@@ -267,10 +267,28 @@ function DistributionBarLabel(props: { x?: string | number; y?: string | number;
   const labelY = Number(y);
   const labelWidth = Number(width);
   const labelHeight = Number(height);
-  if (!payload || labelHeight < 22 || labelWidth < 36) return null;
-  return <text x={labelX + labelWidth / 2} y={labelY + labelHeight / 2 + 3} textAnchor="middle" fill="#fff" fontSize={10} fontWeight={700}>
-    {`${payload.percentage.toFixed(0)}% · ${payload.count}`}
+  if (!payload || labelHeight < 30 || labelWidth < 26) return null;
+  return <text x={labelX + labelWidth / 2} y={labelY + labelHeight / 2 - 2} textAnchor="middle" fill="#fff" fontSize={9} fontWeight={700}>
+    <tspan x={labelX + labelWidth / 2} dy="0">{`${payload.percentage.toFixed(0)}%`}</tspan>
+    <tspan x={labelX + labelWidth / 2} dy="10">{payload.count}</tspan>
   </text>;
+}
+
+function ScoreBarLabel(props: { x?: string | number; y?: string | number; width?: string | number; height?: string | number; value?: unknown }) {
+  const x = Number(props.x ?? 0);
+  const y = Number(props.y ?? 0);
+  const width = Number(props.width ?? 0);
+  const height = Number(props.height ?? 0);
+  if (typeof props.value !== 'string' || !props.value || height < 30) return null;
+  const [percent, score] = props.value.split('|');
+  return <text x={x + width / 2} y={y + height / 2 - 2} textAnchor="middle" fill="#fff" fontSize={9} fontWeight={700}>
+    <tspan x={x + width / 2} dy="0">{percent}</tspan>
+    <tspan x={x + width / 2} dy="10">{score}</tspan>
+  </text>;
+}
+
+function toScorePercent(score: number | null, maxScore: number) {
+  return score === null ? null : Math.min(100, (score / maxScore) * 100);
 }
 
 function CohortHiddenBanner({ minSize }: { minSize: number }) {
@@ -278,9 +296,9 @@ function CohortHiddenBanner({ minSize }: { minSize: number }) {
     <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30">
       <Info className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
       <div className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-        <span className="font-semibold block mb-0.5">Insufficient Group Size</span>
-        Wellness analytics are hidden for groups with fewer than {minSize} students to help protect
-        student privacy. Try selecting a broader group.
+        <span className="font-semibold block mb-0.5">Not enough students to show results</span>
+        Results are hidden for groups with fewer than {minSize} students to protect
+        student privacy. Choose a larger group to see them.
       </div>
     </div>
   );
@@ -430,6 +448,29 @@ export const AdminAnalytics = () => {
         }))
     : [];
 
+  const programChartData = programGroups?.groups.filter((group) => !group.cohort_hidden).map((group) => {
+    const phqPercent = toScorePercent(group.average_phq9, 27);
+    const gadPercent = toScorePercent(group.average_gad7, 21);
+    return {
+      ...group,
+      phq_percentage: phqPercent,
+      gad_percentage: gadPercent,
+      phq_label: phqPercent === null || group.average_phq9 === null ? '' : `${phqPercent.toFixed(0)}%|${group.average_phq9.toFixed(1).replace(/\.0$/, '')}/27`,
+      gad_label: gadPercent === null || group.average_gad7 === null ? '' : `${gadPercent.toFixed(0)}%|${group.average_gad7.toFixed(1).replace(/\.0$/, '')}/21`,
+    };
+  }) ?? [];
+  const yearChartData = yearGroups?.groups.filter((group) => !group.cohort_hidden).map((group) => {
+    const phqPercent = toScorePercent(group.average_phq9, 27);
+    const gadPercent = toScorePercent(group.average_gad7, 21);
+    return {
+      ...group,
+      phq_percentage: phqPercent,
+      gad_percentage: gadPercent,
+      phq_label: phqPercent === null || group.average_phq9 === null ? '' : `${phqPercent.toFixed(0)}%|${group.average_phq9.toFixed(1).replace(/\.0$/, '')}/27`,
+      gad_label: gadPercent === null || group.average_gad7 === null ? '' : `${gadPercent.toFixed(0)}%|${group.average_gad7.toFixed(1).replace(/\.0$/, '')}/21`,
+    };
+  }) ?? [];
+
   const trendData = trend?.trend.slice(-60) ?? [];
 
   // ─ Render ─────────────────────────────────────────────────────────────────
@@ -443,14 +484,14 @@ export const AdminAnalytics = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Wellness Analytics
+              Student Wellness Summary
             </h1>
             <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 rounded border border-brand-100 dark:border-brand-800/60">
-              Aggregate Only
+              Group totals only
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Aggregated wellness metrics across student groups. No individual student data is displayed.
+            A view of student activity and screening results by group. No individual student details are shown.
           </p>
         </div>
 
@@ -688,7 +729,7 @@ export const AdminAnalytics = () => {
               accent="text-brand-600 dark:text-brand-400"
             />
             <KpiCard
-              label="Assessments"
+              label="Screenings"
               value={overview?.assessment_count ?? '—'}
               sub={`${formatRate(overview?.assessment_participation_rate ?? null)} of students · screening mix below`}
               icon={<ClipboardList className="w-4 h-4" />}
@@ -715,9 +756,9 @@ export const AdminAnalytics = () => {
               actionLabel="Review activity trend"
             />
             <KpiCard
-              label="Follow-up Flags"
+              label="Follow-up Needed"
               value={overview?.follow_up_flags ?? '—'}
-              sub="Aggregate count; use support protocols for follow-up"
+              sub="Group total; follow your campus support process"
               icon={<AlertTriangle className="w-4 h-4" />}
               accent="text-amber-500 dark:text-amber-400"
             />
@@ -737,7 +778,7 @@ export const AdminAnalytics = () => {
             <SkeletonCard />
           </div>
         ) : screening?.cohort_hidden ? (
-          <CohortHiddenBanner minSize={screening ? 0 : (overview?.min_cohort_size ?? 5)} />
+          <CohortHiddenBanner minSize={overview?.min_cohort_size ?? 5} />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* PHQ-9 Average */}
@@ -748,7 +789,7 @@ export const AdminAnalytics = () => {
                     Average PHQ-9 Score
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Descriptive aggregate — not a clinical determination
+                    Average score across completed screenings; not a diagnosis
                   </p>
                 </div>
               </div>
@@ -756,7 +797,7 @@ export const AdminAnalytics = () => {
                 {formatAvg(screening?.average_phq9 ?? null)}
               </div>
               <div className="text-[11px] text-slate-400 dark:text-slate-500">
-                {screening?.sample_size ?? 0} completed assessments · bars show percent and count by score band
+                {screening?.sample_size ?? 0} completed screenings · bars show the share and number in each score range
               </div>
 
               {phq9DistData.length > 0 && (
@@ -767,6 +808,7 @@ export const AdminAnalytics = () => {
                       <XAxis dataKey="band" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
                       <Tooltip
+                        formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Share of completed screenings']}
                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
                       />
                       <Bar dataKey="percentage" name="Students (% of completed assessments)" radius={[4, 4, 0, 0]}>
@@ -789,7 +831,7 @@ export const AdminAnalytics = () => {
                     Average GAD-7 Score
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Descriptive aggregate — not a clinical determination
+                    Average score across completed screenings; not a diagnosis
                   </p>
                 </div>
               </div>
@@ -797,7 +839,7 @@ export const AdminAnalytics = () => {
                 {formatAvg(screening?.average_gad7 ?? null)}
               </div>
               <div className="text-[11px] text-slate-400 dark:text-slate-500">
-                {screening?.sample_size ?? 0} completed assessments · bars show percent and count by score band
+                {screening?.sample_size ?? 0} completed screenings · bars show the share and number in each score range
               </div>
 
               {gad7DistData.length > 0 && (
@@ -808,6 +850,7 @@ export const AdminAnalytics = () => {
                       <XAxis dataKey="band" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
                       <Tooltip
+                        formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Share of completed screenings']}
                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
                       />
                       <Bar dataKey="percentage" name="Students (% of completed assessments)" radius={[4, 4, 0, 0]}>
@@ -828,17 +871,17 @@ export const AdminAnalytics = () => {
       {/* ── Metrics by Group ── */}
       <div id="group-comparisons" className="scroll-mt-6">
         <h2 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
-          Metrics by Group
+          Compare Student Groups
         </h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* By Program */}
           <Card className="p-5 border border-slate-200 dark:border-slate-800 shadow-none bg-white dark:bg-slate-900">
             <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
-              Average Scores by Program
+              Average Screening Scores by Program
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
-              Average screening scores (0–27 PHQ-9 and 0–21 GAD-7); descriptive only, not a group ranking.
+              Bars show each group’s average as a share of the highest possible score, with the score shown inside. These results do not rank programs.
             </p>
             {isLoading ? (
               <SkeletonChart />
@@ -851,18 +894,23 @@ export const AdminAnalytics = () => {
                 <div className="h-52">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={programGroups.groups.filter((g) => !g.cohort_hidden)}
+                      data={programChartData}
                       margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
                     >
                       <CartesianGrid stroke="#334155" opacity={0.15} vertical={false} />
                       <XAxis dataKey="group_name" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
                       <Tooltip
+                        formatter={(value, name) => [`${Number(value).toFixed(1)}% of highest score`, name]}
                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
                       />
                       <Legend wrapperStyle={{ fontSize: '10px' }} />
-                      <Bar dataKey="average_phq9" name="Avg PHQ-9" fill="#306c64" radius={[3, 3, 0, 0]} />
-                      <Bar dataKey="average_gad7" name="Avg GAD-7" fill="#10b981" radius={[3, 3, 0, 0]} />
+                      <Bar dataKey="phq_percentage" name="PHQ-9 average" fill="#306c64" radius={[3, 3, 0, 0]}>
+                        <LabelList dataKey="phq_label" content={ScoreBarLabel} />
+                      </Bar>
+                      <Bar dataKey="gad_percentage" name="GAD-7 average" fill="#10b981" radius={[3, 3, 0, 0]}>
+                        <LabelList dataKey="gad_label" content={ScoreBarLabel} />
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -874,8 +922,8 @@ export const AdminAnalytics = () => {
                         <th className="py-2 text-left font-semibold">Program</th>
                         <th className="py-2 text-right font-semibold">Students</th>
                         <th className="py-2 text-right font-semibold">Assessments</th>
-                        <th className="py-2 text-right font-semibold">Avg PHQ-9</th>
-                        <th className="py-2 text-right font-semibold">Avg GAD-7</th>
+                        <th className="py-2 text-right font-semibold">PHQ-9 avg. /27</th>
+                        <th className="py-2 text-right font-semibold">GAD-7 avg. /21</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -884,8 +932,8 @@ export const AdminAnalytics = () => {
                           <td className="py-2 font-medium text-slate-800 dark:text-slate-200">{g.group_name}</td>
                           <td className="py-2 text-right text-slate-600 dark:text-slate-400">{g.student_count}</td>
                           <td className="py-2 text-right text-slate-600 dark:text-slate-400">{g.assessment_count}</td>
-                          <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">hidden*</span> : formatAvg(g.average_phq9)}</td>
-                          <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">hidden*</span> : formatAvg(g.average_gad7)}</td>
+                          <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">Private</span> : formatAvg(g.average_phq9)}</td>
+                          <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">Private</span> : formatAvg(g.average_gad7)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -903,10 +951,10 @@ export const AdminAnalytics = () => {
           {/* By Year Level */}
           <Card className="p-5 border border-slate-200 dark:border-slate-800 shadow-none bg-white dark:bg-slate-900">
             <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
-              Average Scores by Year Level
+              Average Screening Scores by Year Level
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
-              Average screening scores (0–27 PHQ-9 and 0–21 GAD-7); descriptive only, not a group ranking.
+              Bars show each group’s average as a share of the highest possible score, with the score shown inside. These results do not rank year levels.
             </p>
             {isLoading ? (
               <SkeletonChart />
@@ -919,18 +967,23 @@ export const AdminAnalytics = () => {
                 <div className="h-52">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={yearGroups.groups.filter((g) => !g.cohort_hidden)}
+                      data={yearChartData}
                       margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
                     >
                       <CartesianGrid stroke="#334155" opacity={0.15} vertical={false} />
                       <XAxis dataKey="group_name" tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
                       <Tooltip
+                        formatter={(value, name) => [`${Number(value).toFixed(1)}% of highest score`, name]}
                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '6px', border: 'none', color: '#fff', fontSize: '11px' }}
                       />
                       <Legend wrapperStyle={{ fontSize: '10px' }} />
-                      <Bar dataKey="average_phq9" name="Avg PHQ-9" fill="#306c64" radius={[3, 3, 0, 0]} />
-                      <Bar dataKey="average_gad7" name="Avg GAD-7" fill="#10b981" radius={[3, 3, 0, 0]} />
+                      <Bar dataKey="phq_percentage" name="PHQ-9 average" fill="#306c64" radius={[3, 3, 0, 0]}>
+                        <LabelList dataKey="phq_label" content={ScoreBarLabel} />
+                      </Bar>
+                      <Bar dataKey="gad_percentage" name="GAD-7 average" fill="#10b981" radius={[3, 3, 0, 0]}>
+                        <LabelList dataKey="gad_label" content={ScoreBarLabel} />
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -940,8 +993,8 @@ export const AdminAnalytics = () => {
                       <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th className="py-2 text-left font-semibold">Year Level</th>
                         <th className="py-2 text-right font-semibold">Students</th>
-                        <th className="py-2 text-right font-semibold">Avg PHQ-9</th>
-                        <th className="py-2 text-right font-semibold">Avg GAD-7</th>
+                        <th className="py-2 text-right font-semibold">PHQ-9 avg. (out of 27)</th>
+                        <th className="py-2 text-right font-semibold">GAD-7 avg. (out of 21)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -949,8 +1002,8 @@ export const AdminAnalytics = () => {
                         <tr key={g.group_name} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                           <td className="py-2 font-medium text-slate-800 dark:text-slate-200">{g.group_name}</td>
                           <td className="py-2 text-right text-slate-600 dark:text-slate-400">{g.student_count}</td>
-                          <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">hidden*</span> : formatAvg(g.average_phq9)}</td>
-                          <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">hidden*</span> : formatAvg(g.average_gad7)}</td>
+                          <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">Private</span> : formatAvg(g.average_phq9)}</td>
+                          <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">Private</span> : formatAvg(g.average_gad7)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -965,7 +1018,7 @@ export const AdminAnalytics = () => {
         {showSectionComparison && (
           <Card id="section-comparison" className="mt-4 scroll-mt-6 p-5 border border-slate-200 dark:border-slate-800 shadow-none bg-white dark:bg-slate-900">
             <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
-              Average Scores by Section
+              Average Screening Scores by Section
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
               Section comparison for {activeFilters.program} · {activeFilters.year_level}
@@ -994,8 +1047,8 @@ export const AdminAnalytics = () => {
                         <td className="py-2 font-medium text-slate-800 dark:text-slate-200">{g.group_name}</td>
                         <td className="py-2 text-right text-slate-600 dark:text-slate-400">{g.student_count}</td>
                         <td className="py-2 text-right text-slate-600 dark:text-slate-400">{g.assessment_count}</td>
-                        <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">hidden*</span> : formatAvg(g.average_phq9)}</td>
-                        <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">hidden*</span> : formatAvg(g.average_gad7)}</td>
+                        <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">Private</span> : formatAvg(g.average_phq9)}</td>
+                        <td className="py-2 text-right font-mono">{g.cohort_hidden ? <span className="text-amber-500 text-[10px]">Private</span> : formatAvg(g.average_gad7)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1018,7 +1071,7 @@ export const AdminAnalytics = () => {
         </h2>
         <Card className="p-5 border border-slate-200 dark:border-slate-800 shadow-none bg-white dark:bg-slate-900">
           <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
-            Historical Assessment Averages
+            Average Screening Scores Over Time
           </h3>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
             Observed data only — no predictive forecasting.
@@ -1078,16 +1131,15 @@ export const AdminAnalytics = () => {
         </Card>
       </div>
 
-      {/* ── Clinical Disclaimer ── */}
+      {/* ── Results and Privacy ── */}
       <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/80 flex items-start gap-3">
         <Info className="w-5 h-5 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
         <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-          <span className="font-semibold text-slate-800 dark:text-white">Clinical & Privacy Notice: </span>
-          All figures are aggregate descriptive statistics only. They do not constitute clinical diagnoses or
-          determine individual student mental health status. Individual student names, IDs, scores, journal
+          <span className="font-semibold text-slate-800 dark:text-white">About these results: </span>
+          These group summaries are not diagnoses and do not describe any one student’s mental health. Student names, IDs, scores, journal
           contents, and wellness records are never displayed on this page. Groups with fewer than{' '}
           {overview?.min_cohort_size ?? 5} students have their wellness averages withheld to protect student
-          privacy. This page is an institutional analytics tool, not a diagnostic system.
+          privacy. Use these results to understand participation and plan general campus support, not to assess an individual student.
         </div>
       </div>
     </div>
