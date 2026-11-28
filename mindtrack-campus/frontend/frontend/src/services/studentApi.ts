@@ -7,6 +7,9 @@ import type {
   JournalAnalysis,
   JournalCreateRequest,
   JournalEntry,
+  JournalFolder,
+  JournalFolderRequest,
+  JournalUpdateRequest,
   MantraPostType,
   MantraWallPost,
   PrivacySettings,
@@ -94,6 +97,40 @@ export const listJournalEntries = async () => {
 export const createJournalEntry = async (payload: JournalCreateRequest) => {
   const { data } = await api.post<JournalEntry>('/api/v1/journals', payload);
   return data;
+};
+
+export const getJournalEntry = async (journalId: string) => {
+  const { data } = await api.get<JournalEntry>(`/api/v1/journals/${journalId}`);
+  return data;
+};
+
+export const updateJournalEntry = async (journalId: string, payload: JournalUpdateRequest) => {
+  const { data } = await api.put<JournalEntry>(`/api/v1/journals/${journalId}`, payload);
+  return data;
+};
+
+export const setJournalEntryArchived = async (journalId: string, isArchived: boolean) => {
+  const { data } = await api.patch<JournalEntry>(`/api/v1/journals/${journalId}/archive`, { is_archived: isArchived });
+  return data;
+};
+
+export const listJournalFolders = async () => {
+  const { data } = await api.get<JournalFolder[]>('/api/v1/journal-folders');
+  return data;
+};
+
+export const createJournalFolder = async (payload: JournalFolderRequest) => {
+  const { data } = await api.post<JournalFolder>('/api/v1/journal-folders', payload);
+  return data;
+};
+
+export const updateJournalFolder = async (folderId: string, payload: JournalFolderRequest) => {
+  const { data } = await api.patch<JournalFolder>(`/api/v1/journal-folders/${folderId}`, payload);
+  return data;
+};
+
+export const deleteJournalFolder = async (folderId: string) => {
+  await api.delete(`/api/v1/journal-folders/${folderId}`);
 };
 
 export const getJournalAnalysis = async (journalId: string) => {

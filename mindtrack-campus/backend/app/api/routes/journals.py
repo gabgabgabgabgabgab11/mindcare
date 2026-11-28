@@ -10,6 +10,7 @@ from app.models.journal_analysis import JournalAnalysis
 from app.models.profile import Profile
 from app.nlp.service import analyze_sentiment
 from app.schemas.journal import (
+    JournalArchiveUpdateRequest,
     JournalAnalysisResponse,
     JournalCreateRequest,
     JournalListItem,
@@ -22,6 +23,8 @@ from app.services.journal_repository import (
     delete_journal_for_user,
     get_journal_for_user,
     list_journals_for_user,
+    set_journal_archived,
+    to_list_response_dict,
     to_response_dict,
     update_journal_for_user,
 )
@@ -39,14 +42,15 @@ def _run_analysis_best_effort(db: Session, journal_id, content: str) -> None:
     not raised."""
     try:
         result = analyze_sentiment(content)
-        db.add(
-            JournalAnalysis(
-                journal_id=journal_id,
-                sentiment_label=result.label.value,
-                confidence=result.confidence,
-                model_version=result.model_version,
-            )
-        )
+        analysis = db.execute(
+            select(JournalAnalysis).where(JournalAnalysis.journal_id == journal_id)
+        ).scalars().first()
+        if analysis is None:
+            analysis = JournalAnalysis(journal_id=journal_id)
+            db.add(analysis)
+        analysis.sentiment_label = result.label.value
+        analysis.confidence = result.confidence
+        analysis.model_version = result.model_version
         db.commit()
     except Exception:
         logger.exception("NLP analysis failed for journal_id=%s (non-fatal)", journal_id)
@@ -59,7 +63,14 @@ def create_journal_entry(
     profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
-    journal = create_journal(db, profile.id, payload.content)
+    journal = create_journal(
+        db,
+        profile.id,
+        payload.content,
+        title=payload.title,
+        folder_id=payload.folder_id,
+        decorations=[item.model_dump() for item in payload.decorations],
+    )
     if are_journal_insights_enabled(db, profile.id):
         _run_analysis_best_effort(db, journal.id, payload.content)
     log_event(db, "journal_created", "Journal entry created", actor_id=profile.id)
@@ -72,7 +83,7 @@ def list_journal_entries(
     db: Session = Depends(get_db),
 ):
     journals = list_journals_for_user(db, profile.id)
-    return [JournalListItem(**to_response_dict(j)) for j in journals]
+    return [JournalListItem(**to_list_response_dict(j)) for j in journals]
 
 
 @router.get("/{journal_id}", response_model=JournalResponse)
@@ -116,9 +127,32 @@ def update_journal_entry(
     profile: Profile = Depends(require_consent),
     db: Session = Depends(get_db),
 ):
-    journal = update_journal_for_user(db, profile.id, journal_id, payload.content)
+    journal = update_journal_for_user(
+        db,
+        profile.id,
+        journal_id,
+        payload.content,
+        title=payload.title,
+        folder_id=payload.folder_id,
+        is_archived=payload.is_archived,
+        decorations=[item.model_dump() for item in payload.decorations],
+    )
     if are_journal_insights_enabled(db, profile.id):
         _run_analysis_best_effort(db, journal.id, payload.content)  # re-analyze on edit
+    return JournalResponse(**to_response_dict(journal))
+
+
+@router.patch("/{journal_id}/archive", response_model=JournalResponse)
+def archive_journal_entry(
+    journal_id: UUID,
+    payload: JournalArchiveUpdateRequest,
+    profile: Profile = Depends(require_consent),
+    db: Session = Depends(get_db),
+):
+    journal = set_journal_archived(db, profile.id, journal_id, payload.is_archived)
+    event = "journal_archived" if payload.is_archived else "journal_unarchived"
+    description = "Journal entry archived" if payload.is_archived else "Journal entry restored"
+    log_event(db, event, description, actor_id=profile.id)
     return JournalResponse(**to_response_dict(journal))
 
 

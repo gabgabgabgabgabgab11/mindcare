@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Frown, Meh, Smile } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { WellnessPriorityCard } from '../components/WellnessPriorityCard';
 import { getCurrentUser, listJournalEntries, listWellnessCheckIns, getWellnessPriority, submitWellnessCheckIn, updateProfile } from '../services/studentApi';
 import { studentCache } from '../services/studentCache';
 import { getCompanionDisplay, getTimeBasedGreeting, PETS, type CompanionPetState } from '../constants/pets';
@@ -490,7 +489,6 @@ export const StudentDashboard = () => {
 
           </div>
 
-          <WellnessPriorityCard />
         </div>
 
         {/* RIGHT COLUMN */}
@@ -566,27 +564,14 @@ export const StudentDashboard = () => {
                 </h4>
                 <p className="text-sm text-gray-600 dark:text-slate-300 italic mb-4">"What is one small win you had today?"</p>
                 
-                <Button onClick={() => navigate('/journal')} variant="secondary" className="w-full bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-brand-700 dark:hover:text-brand-300 transition-colors text-xs py-2.5 rounded-xl shadow-xs cursor-pointer">
-                  Open Journal
+                <Button onClick={() => navigate('/journal')} className="w-full justify-center gap-2 rounded-xl bg-emerald-700 py-3 text-sm font-bold text-white shadow-md shadow-emerald-900/15 transition-all hover:bg-emerald-800 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
+                  <span>Open Journal</span>
+                  <span aria-hidden="true">→</span>
                 </Button>
               </div>
             </div>
             
           </Card>
-
-          {/* Quick Support Link */}
-          <button data-tour="find-support" onClick={() => navigate('/resources')} className="flex items-center justify-between p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm hover:border-brand-200 dark:hover:border-brand-800 hover:shadow-md transition-all group">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-              </div>
-              <div className="text-left">
-                <h4 className="text-sm font-bold text-gray-900 dark:text-white">Find Support</h4>
-                <p className="text-[10px] text-gray-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">OSS Counseling</p>
-              </div>
-            </div>
-            <svg className="w-5 h-5 text-gray-300 dark:text-slate-600 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-          </button>
 
         </div>
       </div>

@@ -141,10 +141,43 @@ export interface JournalEntry {
   content: string;
   created_at: string;
   updated_at: string;
+  title?: string | null;
+  folder_id?: string | null;
+  is_archived?: boolean;
+  decoration_count?: number;
+  decorations?: JournalDecoration[];
+}
+
+export interface JournalDecoration {
+  id: string;
+  kind: 'sticker' | 'photo' | 'washi';
+  value: string;
+  position?: number;
+}
+
+export interface JournalFolder {
+  id: string;
+  name: string;
+  cover_color: 'sage' | 'rose' | 'lavender' | 'sky' | 'amber';
+  cover_image?: string | null;
+  created_at: string;
 }
 
 export interface JournalCreateRequest {
   content: string;
+  title?: string | null;
+  folder_id?: string | null;
+  decorations?: JournalDecoration[];
+}
+
+export interface JournalUpdateRequest extends JournalCreateRequest {
+  is_archived: boolean;
+}
+
+export interface JournalFolderRequest {
+  name: string;
+  cover_color: JournalFolder['cover_color'];
+  cover_image?: string | null;
 }
 
 export interface JournalAnalysis {
