@@ -535,16 +535,16 @@ export const Journal = () => {
         action={<Button type="button" data-tour="journal-create" onClick={handleNewPage} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800"><NotebookPen className="mr-2 h-4 w-4" />New page</Button>}
       />
 
-      <Card style={{ backgroundColor: '#e8f4ef', color: '#123c32', borderColor: '#c2ddd2' }} className="overflow-hidden rounded-3xl border p-0 shadow-md shadow-emerald-950/10">
+      <Card className="overflow-hidden rounded-3xl border border-emerald-100 bg-emerald-50 text-emerald-950 shadow-md shadow-emerald-950/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
         <div className="relative flex flex-col gap-4 overflow-hidden p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-          <div className="absolute -right-6 -top-10 h-36 w-36 rounded-full bg-emerald-700/5" aria-hidden="true" />
+          <div className="absolute -right-6 -top-10 h-36 w-36 rounded-full bg-emerald-700/5 dark:bg-emerald-300/5" aria-hidden="true" />
           <div className="relative flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-200 bg-white/80 text-emerald-800"><BookHeart className="h-7 w-7" /></div>
-            <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-800">Your little corner</p><h2 className="mt-1 text-2xl font-black text-emerald-950">My Notebook</h2></div>
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-200 bg-white/80 text-emerald-800 dark:border-slate-600 dark:bg-slate-800 dark:text-emerald-300"><BookHeart className="h-7 w-7" /></div>
+            <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-800 dark:text-emerald-300">Your little corner</p><h2 className="mt-1 text-2xl font-black text-emerald-950 dark:text-white">My Notebook</h2></div>
           </div>
-          <label className="relative flex flex-wrap items-center gap-2 text-xs font-bold text-emerald-950">
+          <label className="relative flex flex-wrap items-center gap-2 text-xs font-bold text-emerald-950 dark:text-slate-200">
             Notebook paper
-            <select value={notebookTheme} onChange={(event) => setNotebookTheme(event.target.value as NotebookTheme)} className="min-w-36 cursor-pointer rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold text-emerald-950 shadow-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 [&>option]:bg-white [&>option]:text-slate-900">
+            <select value={notebookTheme} onChange={(event) => setNotebookTheme(event.target.value as NotebookTheme)} className="min-w-36 cursor-pointer rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold text-emerald-950 shadow-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 [&>option]:bg-white [&>option]:text-slate-900 dark:[&>option]:bg-slate-800 dark:[&>option]:text-slate-100">
               <option value="paper">Warm paper</option><option value="sage">Soft sage</option><option value="lavender">Lavender</option>
             </select>
           </label>
